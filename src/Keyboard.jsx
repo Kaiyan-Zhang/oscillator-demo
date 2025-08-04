@@ -16,7 +16,7 @@ export const Keyboard = () => {
     { name: "Si", frequency: 493.88 }, // B4 (Si)
   ];
 
-  const [activeKey, setActiveKey] = useState(null);
+  const [activeKeys, setActiveKeys] = useState(new Set());
   const [semitoneShift, setSemitoneShift] = useState(0);
   const oscillators = useRef({});
   const gainNodes = useRef({});
@@ -82,7 +82,7 @@ export const Keyboard = () => {
     if (!gainNodes.current[key]) return;
     gainNodes.current[key].gain.setValueAtTime(0.1, audioContext.currentTime); // Set volume
     console.log("Playing note:", key); // 添加调试日志
-    setActiveKey(key);
+    setActiveKeys(prev => new Set(prev).add(key));
   };
 
   // Function to stop a note
@@ -90,10 +90,11 @@ export const Keyboard = () => {
     if (!gainNodes.current[key]) return;
     gainNodes.current[key].gain.setValueAtTime(0, audioContext.currentTime); // Mute
     console.log("Stopping note:", key); // 添加调试日志
-    // 只有当释放的是当前激活的键时，才清除 activeKey
-    if (activeKey === key) {
-      setActiveKey(null);
-    }
+    setActiveKeys(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(key);
+      return newSet;
+    });
   };
 
   // Handle keyboard events
@@ -155,8 +156,8 @@ export const Keyboard = () => {
       <p>按键 1-7 播放音符，方向键上下改变八度，+/- 改变半音</p>
       <p>当前半音偏移: {semitoneShift}</p>
       <p style={{ marginTop: "10px", fontWeight: "bold", color: "#4CAF50" }}>
-        {activeKey
-          ? `当前按下: ${activeKey} (${getNoteName(activeKey)})`
+        {Array.from(activeKeys).length > 0
+          ? `当前按下: ${Array.from(activeKeys).map(key => `${key} (${getNoteName(key)})`).join(", ")}`
           : "未按下任何键"}
       </p>
       <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
@@ -167,19 +168,19 @@ export const Keyboard = () => {
               width: "60px",
               height: "120px",
               fontSize: "18px",
-              backgroundColor: activeKey === key ? "#4CAF50" : "#f0f0f0",
-              border: activeKey === key ? "3px solid #2E7D32" : "1px solid #ccc",
+              backgroundColor: activeKeys.has(key) ? "#4CAF50" : "#f0f0f0",
+              border: activeKeys.has(key) ? "3px solid #2E7D32" : "1px solid #ccc",
               borderRadius: "5px",
               cursor: "pointer",
               boxShadow:
-                activeKey === key
+                activeKeys.has(key)
                   ? "0 0 15px rgba(76, 175, 80, 0.7)" : "0 2px 4px rgba(0,0,0,0.1)",
               transform:
-                activeKey === key
+                activeKeys.has(key)
                   ? "scale(1.05) translateY(-5px)" : "scale(1) translateY(0)",
               transition: "all 0.2s ease-in-out",
               outline: "none",
-              zIndex: activeKey === key ? 1 : 0,
+              zIndex: activeKeys.has(key) ? 1 : 0,
             }}
             onClick={() => playNote(key)}
             onMouseDown={() => playNote(key)}
