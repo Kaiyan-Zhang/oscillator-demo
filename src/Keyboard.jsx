@@ -5,28 +5,48 @@ export const Keyboard = () => {
   // 使用自定义 Hook 获取音频上下文
   const audioContext = useAudioContext();
 
-  // Define note names and frequencies
-  const baseScale = [
-    { name: "Do", frequency: 261.63 }, // C4 (Do)
-    { name: "Re", frequency: 293.66 }, // D4 (Re)
-    { name: "Mi", frequency: 329.63 }, // E4 (Mi)
-    { name: "Fa", frequency: 349.23 }, // F4 (Fa)
-    { name: "Sol", frequency: 392.0 }, // G4 (Sol)
-    { name: "La", frequency: 440.0 }, // A4 (La)
-    { name: "Si", frequency: 493.88 }, // B4 (Si)
-  ];
+  // 定义中央 C (C4) 的频率
+  const MIDDLE_C_FREQUENCY = 261.63;
+  
+  // 定义音符名称
+  const noteNames = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si"];
+  
+  // 定义键到音符的映射关系
+  const keyToNoteMap = {
+    '1': { index: 0, octaveOffset: 1 },  // C5 (高八度)
+    '2': { index: 1, octaveOffset: 1 },  // D5
+    '3': { index: 2, octaveOffset: 1 },  // E5
+    '4': { index: 3, octaveOffset: 1 },  // F5
+    '5': { index: 4, octaveOffset: 1 },  // G5
+    '6': { index: 5, octaveOffset: 1 },  // A5
+    '7': { index: 6, octaveOffset: 1 },  // B5
+    'q': { index: 0, octaveOffset: 0 },  // C4 (中央C)
+    'w': { index: 1, octaveOffset: 0 },  // D4
+    'e': { index: 2, octaveOffset: 0 },  // E4
+    'r': { index: 3, octaveOffset: 0 },  // F4
+    't': { index: 4, octaveOffset: 0 },  // G4
+    'y': { index: 5, octaveOffset: 0 },  // A4
+    'u': { index: 6, octaveOffset: 0 },  // B4
+    'a': { index: 0, octaveOffset: -1 }, // C3 (低八度)
+    's': { index: 1, octaveOffset: -1 }, // D3
+    'd': { index: 2, octaveOffset: -1 }, // E3
+    'f': { index: 3, octaveOffset: -1 }, // F3
+    'g': { index: 4, octaveOffset: -1 }, // G3
+    'h': { index: 5, octaveOffset: -1 }, // A3
+    'j': { index: 6, octaveOffset: -1 }, // B3
+  };
 
   const [activeKeys, setActiveKeys] = useState(new Set());
   const [semitoneShift, setSemitoneShift] = useState(0);
   const oscillators = useRef({});
   const gainNodes = useRef({});
 
-  // Initialize all oscillators when component mounts
+  // 初始化所有振荡器
   useEffect(() => {
-    // Create oscillators for all 7 notes
-    for (let i = 1; i <= 7; i++) {
-      const noteIndex = i - 1;
-      const frequency = getTransposedFrequency(noteIndex);
+    // 为所有可能的键创建振荡器
+    Object.keys(keyToNoteMap).forEach(key => {
+      const { index, octaveOffset } = keyToNoteMap[key];
+      const frequency = getFrequency(index, octaveOffset);
 
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -35,61 +55,64 @@ export const Keyboard = () => {
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime); // Start with volume 0
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime); // 初始音量为0
 
       oscillator.start();
 
-      oscillators.current[i] = oscillator;
-      gainNodes.current[i] = gainNode;
-    }
+      oscillators.current[key] = oscillator;
+      gainNodes.current[key] = gainNode;
+    });
 
-    // Cleanup function to stop all oscillators when component unmounts
+    // 组件卸载时停止所有振荡器
     return () => {
-      for (let i = 1; i <= 7; i++) {
-        oscillators.current[i]?.stop();
-      }
+      Object.keys(oscillators.current).forEach(key => {
+        oscillators.current[key]?.stop();
+      });
     };
   }, [audioContext]);
 
-  // Update oscillator frequencies when semitoneShift changes
+  // 当半音偏移改变时更新振荡器频率
   useEffect(() => {
-    for (let i = 1; i <= 7; i++) {
-      const noteIndex = i - 1;
-      const frequency = getTransposedFrequency(noteIndex);
-      oscillators.current[i].frequency.setValueAtTime(
+    Object.keys(oscillators.current).forEach(key => {
+      const { index, octaveOffset } = keyToNoteMap[key];
+      const frequency = getFrequency(index, octaveOffset);
+      oscillators.current[key].frequency.setValueAtTime(
         frequency,
         audioContext.currentTime
       );
-    }
+    });
   }, [semitoneShift, audioContext]);
 
-  // Calculate note frequency (considering semitone shifts)
-  const getTransposedFrequency = (noteIndex) => {
-    let frequency = baseScale[noteIndex].frequency;
-    frequency *= Math.pow(2, semitoneShift / 12); // Semitone change (includes octave shifts)
-    return frequency;
+  // 计算音符频率
+  const getFrequency = (noteIndex, octaveOffset) => {
+    // 计算基本频率 (C4 为基准)
+    const baseFrequency = MIDDLE_C_FREQUENCY * Math.pow(2, octaveOffset);
+    // 根据音符索引计算频率 (全音阶)
+    const scaleRatio = [1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8][noteIndex];
+    // 应用半音偏移
+    const shiftedFrequency = baseFrequency * scaleRatio * Math.pow(2, semitoneShift / 12);
+    return shiftedFrequency;
   };
 
-  // Get note name from key
+  // 获取音符名称
   const getNoteName = (key) => {
-    if (!key) return null;
-    const noteIndex = parseInt(key) - 1;
-    return baseScale[noteIndex]?.name || null;
+    if (!keyToNoteMap[key]) return null;
+    const { index, octaveOffset } = keyToNoteMap[key];
+    const octave = 4 + octaveOffset; // 中央C是C4
+    return `${noteNames[index]}${octave}`;
   };
 
-  // Function to play a note
+  // 播放音符
   const playNote = (key) => {
-    if (!gainNodes.current[key]) return;
-    gainNodes.current[key].gain.setValueAtTime(0.1, audioContext.currentTime); // Set volume
-    console.log("Playing note:", key); // 添加调试日志
+    if (!keyToNoteMap[key] || !gainNodes.current[key]) return;
+    gainNodes.current[key].gain.setValueAtTime(0.1, audioContext.currentTime);
     setActiveKeys(prev => new Set(prev).add(key));
   };
 
-  // Function to stop a note
+  // 停止音符
   const stopNote = (key) => {
-    if (!gainNodes.current[key]) return;
-    gainNodes.current[key].gain.setValueAtTime(0, audioContext.currentTime); // Mute
-    console.log("Stopping note:", key); // 添加调试日志
+    if (!keyToNoteMap[key] || !gainNodes.current[key]) return;
+    gainNodes.current[key].gain.setValueAtTime(0, audioContext.currentTime);
     setActiveKeys(prev => {
       const newSet = new Set(prev);
       newSet.delete(key);
@@ -97,38 +120,40 @@ export const Keyboard = () => {
     });
   };
 
-  // Handle keyboard events
+  // 处理键盘事件
   useEffect(() => {
     const handleKeyDown = (event) => {
-      const key = event.key;
-      if (key >= "1" && key <= "7") {
-        event.preventDefault(); // 防止默认行为
+      const key = event.key.toLowerCase(); // 忽略大小写
+      
+      if (keyToNoteMap[key]) {
+        event.preventDefault();
         playNote(key);
       }
 
-      // Semitone controls (12 semitones = 1 octave)
+      // 半音控制
       if (event.key === "ArrowUp") {
         event.preventDefault();
-        setSemitoneShift(semitoneShift + 12); // Up one octave
+        setSemitoneShift(semitoneShift + 12); // 上移一个八度
       }
       if (event.key === "ArrowDown") {
         event.preventDefault();
-        setSemitoneShift(semitoneShift - 12); // Down one octave
+        setSemitoneShift(semitoneShift - 12); // 下移一个八度
       }
       if (event.key === "+" || event.key === "=") {
         event.preventDefault();
-        setSemitoneShift(semitoneShift + 1); // Up one semitone
+        setSemitoneShift(semitoneShift + 1); // 上移一个半音
       }
       if (event.key === "-" || event.key === "_") {
         event.preventDefault();
-        setSemitoneShift(semitoneShift - 1); // Down one semitone
+        setSemitoneShift(semitoneShift - 1); // 下移一个半音
       }
     };
 
     const handleKeyUp = (event) => {
-      const key = event.key;
-      if (key >= "1" && key <= "7") {
-        event.preventDefault(); // 防止默认行为
+      const key = event.key.toLowerCase();
+      
+      if (keyToNoteMap[key]) {
+        event.preventDefault();
         stopNote(key);
       }
     };
@@ -150,20 +175,29 @@ export const Keyboard = () => {
         flexDirection: "column",
         alignItems: "center",
         padding: "20px",
+        fontFamily: "Arial, sans-serif",
       }}
     >
       <h2>音乐键盘</h2>
-      <p>按键 1-7 播放音符，方向键上下改变八度，+/- 改变半音</p>
+      <p>
+        数字键 1-7: 高八度 (C5-B5)<br />
+        字母键 qwertyu: 中央八度 (C4-B4，q为中央C)<br />
+        字母键 asdfghj: 低八度 (C3-B3)
+      </p>
+      <p>方向键上下: 改变八度 | +/-键: 改变半音</p>
       <p>当前半音偏移: {semitoneShift}</p>
+      
       <p style={{ marginTop: "10px", fontWeight: "bold", color: "#4CAF50" }}>
         {Array.from(activeKeys).length > 0
           ? `当前按下: ${Array.from(activeKeys).map(key => `${key} (${getNoteName(key)})`).join(", ")}`
           : "未按下任何键"}
       </p>
+      
+      {/* 高八度键盘 (数字键) */}
       <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
         {["1", "2", "3", "4", "5", "6", "7"].map((key) => (
           <button
-            key={key}
+            key={`high-${key}`}
             style={{
               width: "60px",
               height: "120px",
@@ -175,6 +209,77 @@ export const Keyboard = () => {
               boxShadow:
                 activeKeys.has(key)
                   ? "0 0 15px rgba(76, 175, 80, 0.7)" : "0 2px 4px rgba(0,0,0,0.1)",
+              transform:
+                activeKeys.has(key)
+                  ? "scale(1.05) translateY(-5px)" : "scale(1) translateY(0)",
+              transition: "all 0.2s ease-in-out",
+              outline: "none",
+              zIndex: activeKeys.has(key) ? 1 : 0,
+            }}
+            onClick={() => playNote(key)}
+            onMouseDown={() => playNote(key)}
+            onMouseUp={() => stopNote(key)}
+            onMouseLeave={() => stopNote(key)}
+          >
+            {key}
+            <br />
+            {getNoteName(key)}
+          </button>
+        ))}
+      </div>
+      
+      {/* 中央八度键盘 (qwertyu) */}
+      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+        {["q", "w", "e", "r", "t", "y", "u"].map((key) => (
+          <button
+            key={`middle-${key}`}
+            style={{
+              width: "60px",
+              height: "120px",
+              fontSize: "18px",
+              backgroundColor: activeKeys.has(key) ? "#2196F3" : "#e3f2fd",
+              border: activeKeys.has(key) ? "3px solid #0D47A1" : "1px solid #90caf9",
+              borderRadius: "5px",
+              cursor: "pointer",
+              boxShadow:
+                activeKeys.has(key)
+                  ? "0 0 15px rgba(33, 150, 243, 0.7)" : "0 2px 4px rgba(0,0,0,0.1)",
+              transform:
+                activeKeys.has(key)
+                  ? "scale(1.05) translateY(-5px)" : "scale(1) translateY(0)",
+              transition: "all 0.2s ease-in-out",
+              outline: "none",
+              zIndex: activeKeys.has(key) ? 1 : 0,
+              fontWeight: key === 'q' ? 'bold' : 'normal', // q键加粗显示
+            }}
+            onClick={() => playNote(key)}
+            onMouseDown={() => playNote(key)}
+            onMouseUp={() => stopNote(key)}
+            onMouseLeave={() => stopNote(key)}
+          >
+            {key}
+            <br />
+            {getNoteName(key)}
+          </button>
+        ))}
+      </div>
+      
+      {/* 低八度键盘 (asdfghj) */}
+      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+        {["a", "s", "d", "f", "g", "h", "j"].map((key) => (
+          <button
+            key={`low-${key}`}
+            style={{
+              width: "60px",
+              height: "120px",
+              fontSize: "18px",
+              backgroundColor: activeKeys.has(key) ? "#FF9800" : "#fff3e0",
+              border: activeKeys.has(key) ? "3px solid #E65100" : "1px solid #ffcc80",
+              borderRadius: "5px",
+              cursor: "pointer",
+              boxShadow:
+                activeKeys.has(key)
+                  ? "0 0 15px rgba(255, 152, 0, 0.7)" : "0 2px 4px rgba(0,0,0,0.1)",
               transform:
                 activeKeys.has(key)
                   ? "scale(1.05) translateY(-5px)" : "scale(1) translateY(0)",
