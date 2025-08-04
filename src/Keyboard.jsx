@@ -1,6 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
+import { useAudioContext } from "./AudioContextWrapper.jsx";
 
-export const Keyboard = ({ audioContext }) => {
+export const Keyboard = () => {
+  // 使用自定义 Hook 获取音频上下文
+  const audioContext = useAudioContext();
+
   // Define note names and frequencies
   const baseScale = [
     { name: "Do", frequency: 261.63 }, // C4 (Do)
@@ -12,12 +16,10 @@ export const Keyboard = ({ audioContext }) => {
     { name: "Si", frequency: 493.88 }, // B4 (Si)
   ];
 
-  // Manage key states with useState
-  const [activeKey, setActiveKey] = useState(null); // Currently pressed key
-  const [semitoneShift, setSemitoneShift] = useState(0); // Semitone transposition amount
-
-  const oscillators = useRef({}); // Store all oscillators
-  const gainNodes = useRef({}); // Store gain nodes for each oscillator
+  const [activeKey, setActiveKey] = useState(null);
+  const [semitoneShift, setSemitoneShift] = useState(0);
+  const oscillators = useRef({});
+  const gainNodes = useRef({});
 
   // Initialize all oscillators when component mounts
   useEffect(() => {
@@ -54,7 +56,10 @@ export const Keyboard = ({ audioContext }) => {
     for (let i = 1; i <= 7; i++) {
       const noteIndex = i - 1;
       const frequency = getTransposedFrequency(noteIndex);
-      oscillators.current[i].frequency.setValueAtTime(frequency, audioContext.currentTime);
+      oscillators.current[i].frequency.setValueAtTime(
+        frequency,
+        audioContext.currentTime
+      );
     }
   }, [semitoneShift, audioContext]);
 
@@ -76,6 +81,7 @@ export const Keyboard = ({ audioContext }) => {
   const playNote = (key) => {
     if (!gainNodes.current[key]) return;
     gainNodes.current[key].gain.setValueAtTime(0.1, audioContext.currentTime); // Set volume
+    console.log("Playing note:", key); // 添加调试日志
     setActiveKey(key);
   };
 
@@ -83,7 +89,11 @@ export const Keyboard = ({ audioContext }) => {
   const stopNote = (key) => {
     if (!gainNodes.current[key]) return;
     gainNodes.current[key].gain.setValueAtTime(0, audioContext.currentTime); // Mute
-    setActiveKey(null); // Clear active key when released
+    console.log("Stopping note:", key); // 添加调试日志
+    // 只有当释放的是当前激活的键时，才清除 activeKey
+    if (activeKey === key) {
+      setActiveKey(null);
+    }
   };
 
   // Handle keyboard events
@@ -91,50 +101,96 @@ export const Keyboard = ({ audioContext }) => {
     const handleKeyDown = (event) => {
       const key = event.key;
       if (key >= "1" && key <= "7") {
+        event.preventDefault(); // 防止默认行为
         playNote(key);
       }
 
       // Semitone controls (12 semitones = 1 octave)
-      if (event.key === "ArrowUp") setSemitoneShift(semitoneShift + 12); // Up one octave
-      if (event.key === "ArrowDown") setSemitoneShift(semitoneShift - 12); // Down one octave
-      if (event.key === "+" || event.key === "=")
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setSemitoneShift(semitoneShift + 12); // Up one octave
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setSemitoneShift(semitoneShift - 12); // Down one octave
+      }
+      if (event.key === "+" || event.key === "=") {
+        event.preventDefault();
         setSemitoneShift(semitoneShift + 1); // Up one semitone
-      if (event.key === "-") setSemitoneShift(semitoneShift - 1); // Down one semitone
+      }
+      if (event.key === "-" || event.key === "_") {
+        event.preventDefault();
+        setSemitoneShift(semitoneShift - 1); // Down one semitone
+      }
     };
 
     const handleKeyUp = (event) => {
       const key = event.key;
       if (key >= "1" && key <= "7") {
+        event.preventDefault(); // 防止默认行为
         stopNote(key);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
 
-    // Clean up event listeners
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
     };
   }, [semitoneShift]);
 
-  // Calculate current octave shift for display
-  const octaveShift = Math.floor(semitoneShift / 12);
-  // Calculate remaining semitones after accounting for octaves
-  const remainingSemitones = semitoneShift % 12;
-
+  // 渲染键盘
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Press keys 1-7 to play C major scale</h1>
-      <p>Use ↑ and ↓ to change octaves, and + and - to transpose semitones.</p>
-
-      <div style={{ marginTop: '20px' }}>
-        <p>Currently pressed key: {activeKey}</p>
-        <p>Note: {getNoteName(activeKey)}</p>
-        <p>Octave Shift: {octaveShift}</p>
-        <p>Semitone Shift: {remainingSemitones}</p>
-        <p>Total Semitone Shift: {semitoneShift}</p>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "20px",
+      }}
+    >
+      <h2>音乐键盘</h2>
+      <p>按键 1-7 播放音符，方向键上下改变八度，+/- 改变半音</p>
+      <p>当前半音偏移: {semitoneShift}</p>
+      <p style={{ marginTop: "10px", fontWeight: "bold", color: "#4CAF50" }}>
+        {activeKey
+          ? `当前按下: ${activeKey} (${getNoteName(activeKey)})`
+          : "未按下任何键"}
+      </p>
+      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+        {["1", "2", "3", "4", "5", "6", "7"].map((key) => (
+          <button
+            key={key}
+            style={{
+              width: "60px",
+              height: "120px",
+              fontSize: "18px",
+              backgroundColor: activeKey === key ? "#4CAF50" : "#f0f0f0",
+              border: activeKey === key ? "3px solid #2E7D32" : "1px solid #ccc",
+              borderRadius: "5px",
+              cursor: "pointer",
+              boxShadow:
+                activeKey === key
+                  ? "0 0 15px rgba(76, 175, 80, 0.7)" : "0 2px 4px rgba(0,0,0,0.1)",
+              transform:
+                activeKey === key
+                  ? "scale(1.05) translateY(-5px)" : "scale(1) translateY(0)",
+              transition: "all 0.2s ease-in-out",
+              outline: "none",
+              zIndex: activeKey === key ? 1 : 0,
+            }}
+            onClick={() => playNote(key)}
+            onMouseDown={() => playNote(key)}
+            onMouseUp={() => stopNote(key)}
+            onMouseLeave={() => stopNote(key)}
+          >
+            {key}
+            <br />
+            {getNoteName(key)}
+          </button>
+        ))}
       </div>
     </div>
   );
