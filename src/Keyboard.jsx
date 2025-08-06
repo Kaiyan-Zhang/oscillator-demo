@@ -4,10 +4,11 @@ import Key from "./Key.jsx";
 import {
   keyToNoteMap,
   keyboardLayouts,
-  getFrequency,
   getFullNoteName,
   isAlpha,
+  isNoteKey,
 } from "./utils/musicUtils";
+import AudioManager from "./utils/audioUtils";
 
 export const Keyboard = () => {
   // 使用自定义 Hook 获取音频上下文
@@ -15,62 +16,38 @@ export const Keyboard = () => {
 
   const [activeKeys, setActiveKeys] = useState(new Set());
   const [semitoneShift, setSemitoneShift] = useState(0);
-  const oscillators = useRef({});
-  const gainNodes = useRef({});
+  const audioManagerRef = useRef(null);
 
-  // 初始化所有振荡器
+  // 初始化音频管理器
   useEffect(() => {
-    // 为所有可能的键创建振荡器
-    Object.keys(keyToNoteMap).forEach((key) => {
-      const noteValue = keyToNoteMap[key];
-      const frequency = getFrequency(noteValue, semitoneShift);
+    if (!audioContext) return;
 
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+    audioManagerRef.current = new AudioManager(audioContext);
+    audioManagerRef.current.initOscillators(keyToNoteMap, semitoneShift);
 
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime); // 初始音量为0
-
-      oscillator.start();
-
-      oscillators.current[key] = oscillator;
-      gainNodes.current[key] = gainNode;
-    });
-
-    // 组件卸载时停止所有振荡器
+    // 组件卸载时清理
     return () => {
-      Object.keys(oscillators.current).forEach((key) => {
-        oscillators.current[key]?.stop();
-      });
+      audioManagerRef.current?.cleanup();
     };
   }, [audioContext]);
 
   // 当半音偏移改变时更新振荡器频率
   useEffect(() => {
-    Object.keys(oscillators.current).forEach((key) => {
-      const noteValue = keyToNoteMap[key];
-      const frequency = getFrequency(noteValue, semitoneShift);
-      oscillators.current[key].frequency.setValueAtTime(
-        frequency,
-        audioContext.currentTime
-      );
-    });
-  }, [semitoneShift, audioContext]);
+    if (!audioManagerRef.current) return;
+    audioManagerRef.current.updateFrequencies(keyToNoteMap, semitoneShift);
+  }, [semitoneShift]);
 
   // 播放音符
   const playNote = (key) => {
-    if (!keyToNoteMap[key] || !gainNodes.current[key]) return;
-    gainNodes.current[key].gain.setValueAtTime(0.1, audioContext.currentTime);
+    if (!isNoteKey(key)) return;
+    audioManagerRef.current?.playNote(key);
     setActiveKeys((prev) => new Set(prev).add(key));
   };
 
   // 停止音符
   const stopNote = (key) => {
-    if (!keyToNoteMap[key] || !gainNodes.current[key]) return;
-    gainNodes.current[key].gain.setValueAtTime(0, audioContext.currentTime);
+    if (!isNoteKey(key)) return;
+    audioManagerRef.current?.stopNote(key);
     setActiveKeys((prev) => {
       const newSet = new Set(prev);
       newSet.delete(key);
@@ -78,17 +55,18 @@ export const Keyboard = () => {
     });
   };
 
-  // 处理键盘事件
+  // 处理键盘事件 - 保持不变
   useEffect(() => {
     const handleKeyDown = (event) => {
-      const key = event.key.toLowerCase(); // 忽略大小写
-
-      if (keyToNoteMap[key]) {
+      const key = event.key.toLowerCase();
+    
+      // if (keyToNoteMap[key] !== undefined) {
+      if (isNoteKey(key)) {
         event.preventDefault();
         playNote(key);
       }
-
-      // 半音控制
+    
+      // 半音控制代码保持不变
       if (event.key === "ArrowUp") {
         event.preventDefault();
         setSemitoneShift(semitoneShift + 12); // 上移一个八度
@@ -109,8 +87,9 @@ export const Keyboard = () => {
 
     const handleKeyUp = (event) => {
       const key = event.key.toLowerCase();
-
-      if (keyToNoteMap[key]) {
+    
+      // if (keyToNoteMap[key]) {
+      if (isNoteKey(key)) {
         event.preventDefault();
         stopNote(key);
       }
@@ -125,7 +104,7 @@ export const Keyboard = () => {
     };
   }, [semitoneShift]);
 
-  // 渲染键盘
+  // 渲染键盘 - 保持不变
   return (
     <div
       style={{

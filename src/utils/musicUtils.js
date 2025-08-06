@@ -50,18 +50,27 @@ export const keyboardLayouts = [
 ];
 
 // 计算音符频率
-export const getFrequency = (noteValue, semitoneShift = 0, baseFrequency = MIDDLE_C_FREQUENCY) => {
+export const getFrequency = (
+  noteValue,
+  semitoneShift = 0,
+  baseFrequency = MIDDLE_C_FREQUENCY
+) => {
   // C4=0，每半音增加1，公式：频率 = 基准频率 * 2^(总半音数/12)
   const totalSemitones = noteValue + semitoneShift;
   return baseFrequency * Math.pow(2, totalSemitones / 12);
 };
 
 // 获取完整音符名称（包含八度）
-export const getFullNoteName = (key, semitoneShift = 0, keyMap = keyToNoteMap, names = noteNames) => {
-  if (!keyMap[key]) return null;
+export const getFullNoteName = (
+  key,
+  semitoneShift = 0,
+  keyMap = keyToNoteMap,
+  names = noteNames
+) => {
+  if (keyMap[key] === undefined) return null;
   const baseNoteValue = keyMap[key];
   const totalNoteValue = baseNoteValue + semitoneShift;
-  const octave = 4 + Math.floor(totalNoteValue / 12); // C4=0，每12个半音升一个八度
+  const octave = 4 + Math.floor(totalNoteValue / 12);
   const noteIndex = totalNoteValue % 12;
   return `${names[noteIndex]}${octave}`;
 };
@@ -70,4 +79,12 @@ export const getFullNoteName = (key, semitoneShift = 0, keyMap = keyToNoteMap, n
 export const isAlpha = (char) => {
   const code = char.charCodeAt(0);
   return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+};
+
+// 检查是否为音符按键
+export const isNoteKey = (key, keyMap = keyToNoteMap) => {
+  // 转换为小写以忽略大小写
+  const lowerKey = key.toLowerCase();
+  // 检查键是否存在于映射中（不考虑值是否为0）
+  return lowerKey in keyMap;
 };
