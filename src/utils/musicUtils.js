@@ -15,7 +15,7 @@ export const noteNames = [
   "B",
 ];
 
-export const keyToNoteMap = {
+export const eventKeyToSemitone = {
   1: 24,
   2: 26,
   3: 28,
@@ -45,19 +45,15 @@ export const keyboardLayouts = [
   ["a", "s", "d", "f", "g", "h", "j"],
 ];
 
-export const getFrequency = (
-  keyNoteInt,
-  semitoneShift = 0,
-  baseFrequency = MIDDLE_C_FREQUENCY
-) => {
-  const totalSemitones = keyNoteInt + semitoneShift;
-  return baseFrequency * Math.pow(2, totalSemitones / 12);
+export const getFrequency = (semitone, semitoneShift = 0) => {
+  const totalSemitones = semitone + semitoneShift;
+  return MIDDLE_C_FREQUENCY * Math.pow(2, totalSemitones / 12);
 };
 
 export const getFullNoteName = (
   key,
   semitoneShift = 0,
-  keyMap = keyToNoteMap,
+  keyMap = eventKeyToSemitone,
   names = noteNames
 ) => {
   if (keyMap[key] === undefined) return null;
@@ -73,7 +69,7 @@ export const isAlpha = (char) => {
   return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
 };
 
-export const isNoteKey = (key, keyMap = keyToNoteMap) => {
+export const isNoteKey = (key, keyMap = eventKeyToSemitone) => {
   const lowerKey = key.toLowerCase();
   return lowerKey in keyMap;
 };

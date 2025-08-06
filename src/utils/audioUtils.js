@@ -1,4 +1,5 @@
 import { getFrequency } from "./musicUtils";
+import { eventKeyToSemitone } from "./musicUtils.js";
 
 class AudioManager {
   constructor(audioContext) {
@@ -7,10 +8,10 @@ class AudioManager {
     this.gainNodes = {};
   }
 
-  initOscillators(keyToNoteMap, semitoneShift = 0) {
-    Object.keys(keyToNoteMap).forEach((key) => {
-      const keyNoteInt = keyToNoteMap[key];
-      const frequency = getFrequency(keyNoteInt, semitoneShift);
+  initOscillators() {
+    Object.keys(eventKeyToSemitone).forEach((eventKey) => {
+      const semitone = eventKeyToSemitone[eventKey];
+      const frequency = getFrequency(semitone, 0);
 
       const oscillator = this.audioContext.createOscillator();
       const gainNode = this.audioContext.createGain();
@@ -26,35 +27,41 @@ class AudioManager {
 
       oscillator.start();
 
-      this.oscillators[key] = oscillator;
-      this.gainNodes[key] = gainNode;
+      this.oscillators[eventKey] = oscillator;
+      this.gainNodes[eventKey] = gainNode;
     });
   }
 
-  updateFrequencies(keyToNoteMap, semitoneShift) {
-    Object.keys(this.oscillators).forEach((key) => {
-      const keyNoteInt = keyToNoteMap[key];
-      const frequency = getFrequency(keyNoteInt, semitoneShift);
-      this.oscillators[key].frequency.setValueAtTime(
+  updateSemitoneShift(semitoneShift) {
+    Object.keys(this.oscillators).forEach((eventKey) => {
+      const semitone = eventKeyToSemitone[eventKey];
+      const frequency = getFrequency(semitone, semitoneShift);
+      this.oscillators[eventKey].frequency.setValueAtTime(
         frequency,
         this.audioContext.currentTime
       );
     });
   }
 
-  playNote(key) {
-    if (!this.gainNodes[key]) return;
-    this.gainNodes[key].gain.setValueAtTime(0.1, this.audioContext.currentTime);
+  playNote(eventKey) {
+    if (!this.gainNodes[eventKey]) return;
+    this.gainNodes[eventKey].gain.setValueAtTime(
+      0.1,
+      this.audioContext.currentTime
+    );
   }
 
-  stopNote(key) {
-    if (!this.gainNodes[key]) return;
-    this.gainNodes[key].gain.setValueAtTime(0, this.audioContext.currentTime);
+  stopNote(eventKey) {
+    if (!this.gainNodes[eventKey]) return;
+    this.gainNodes[eventKey].gain.setValueAtTime(
+      0,
+      this.audioContext.currentTime
+    );
   }
 
   cleanup() {
-    Object.keys(this.oscillators).forEach((key) => {
-      this.oscillators[key]?.stop();
+    Object.keys(this.oscillators).forEach((eventKey) => {
+      this.oscillators[eventKey]?.stop();
     });
     this.oscillators = {};
     this.gainNodes = {};

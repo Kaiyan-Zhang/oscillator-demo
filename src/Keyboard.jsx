@@ -9,76 +9,70 @@ import {
 import { useAudioContext } from "./AudioContextWrapper.jsx";
 import { useAudioManagerRef } from "./hooks/useAudioManagerRef.jsx";
 
+const useSemitoneShift = () => {
+  const [semitoneShift, setSemitoneShift] = useState(0);
+
+  useEffect(() => {
+    const handleArrowKeys = ({ key: eventKey }) => {
+      if (eventKey === "ArrowUp") {
+        setSemitoneShift((semitoneShift) => semitoneShift + 12);
+      }
+      if (eventKey === "ArrowDown") {
+        setSemitoneShift((semitoneShift) => semitoneShift - 12);
+      }
+      if (eventKey === "ArrowRight") {
+        setSemitoneShift((semitoneShift) => semitoneShift + 1);
+      }
+      if (eventKey === "ArrowLeft") {
+        setSemitoneShift((semitoneShift) => semitoneShift - 1);
+      }
+    };
+    document.addEventListener("keydown", handleArrowKeys);
+    return () => {
+      document.removeEventListener("keydown", handleArrowKeys);
+    };
+  }, []);
+  return {
+    semitoneShift,
+  };
+};
+
 export const Keyboard = () => {
   const [activeEventKey, setActiveEventKey] = useState(new Set());
-  const [semitoneShift, setSemitoneShift] = useState(0);
   const audioContext = useAudioContext();
-  const { updateSemitoneShift, playNote, stopNote } = useAudioManagerRef({
+  const { semitoneShift } = useSemitoneShift();
+  const { playNote, stopNote } = useAudioManagerRef({
+    semitoneShift,
     audioContext,
   });
 
   useEffect(() => {
-    updateSemitoneShift(semitoneShift);
-  }, [semitoneShift, updateSemitoneShift]);
-
-  const handlePlayNote = (eventKey) => {
-    playNote(eventKey);
-    setActiveEventKey((prev) => new Set(prev).add(eventKey));
-  };
-
-  const handleStopNote = (eventKey) => {
-    stopNote(eventKey);
-    setActiveEventKey((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(eventKey);
-      return newSet;
-    });
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      const eventKey = event.key.toLowerCase();
-
+    const handleNoteKeyDown = ({ key: eventKey }) => {
       if (isNoteKey(eventKey)) {
-        event.preventDefault();
-        handlePlayNote(eventKey);
-      }
-
-      if (event.key === "ArrowUp") {
-        event.preventDefault();
-        setSemitoneShift(semitoneShift + 12);
-      }
-      if (event.key === "ArrowDown") {
-        event.preventDefault();
-        setSemitoneShift(semitoneShift - 12);
-      }
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        setSemitoneShift(semitoneShift + 1);
-      }
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        setSemitoneShift(semitoneShift - 1);
+        playNote(eventKey);
+        setActiveEventKey((prev) => new Set(prev).add(eventKey));
       }
     };
 
-    const handleKeyUp = (event) => {
-      const eventKey = event.key.toLowerCase();
-
+    const handleNoteKeyUp = ({ key: eventKey }) => {
       if (isNoteKey(eventKey)) {
-        event.preventDefault();
-        handleStopNote(eventKey);
+        stopNote(eventKey);
+        setActiveEventKey((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(eventKey);
+          return newSet;
+        });
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("keyup", handleKeyUp);
+    document.addEventListener("keydown", handleNoteKeyDown);
+    document.addEventListener("keyup", handleNoteKeyUp);
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keyup", handleKeyUp);
+      document.removeEventListener("keydown", handleNoteKeyDown);
+      document.removeEventListener("keyup", handleNoteKeyUp);
     };
-  }, [semitoneShift, handlePlayNote, handleStopNote]);
+  }, [playNote, stopNote]);
 
   return (
     <div

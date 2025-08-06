@@ -1,37 +1,28 @@
 import { useRef, useEffect } from "react";
-import { useAudioContext } from "../AudioContextWrapper.jsx";
 import AudioManager from "../utils/audioUtils.js";
-import { keyToNoteMap } from "../utils/musicUtils.js";
 
-export const useAudioManagerRef = ({ audioContext }) => {
+export const useAudioManagerRef = ({ audioContext, semitoneShift }) => {
   const audioManagerRef = useRef(null);
 
   useEffect(() => {
     if (!audioContext) return;
-
     audioManagerRef.current = new AudioManager(audioContext);
-    audioManagerRef.current.initOscillators(keyToNoteMap);
-
+    audioManagerRef.current.initOscillators();
     return () => {
       audioManagerRef.current?.cleanup();
     };
   }, [audioContext]);
 
-  const updateSemitoneShift = (semitoneShift) => {
-    audioManagerRef?.current.updateFrequencies(keyToNoteMap, semitoneShift);
-  };
-
-  const playNote = (eventKey) => {
-    audioManagerRef.current?.playNote(eventKey);
-  };
-
-  const stopNote = (eventKey) => {
-    audioManagerRef.current?.stopNote(eventKey);
-  };
+  useEffect(() => {
+    audioManagerRef.current?.updateSemitoneShift(semitoneShift);
+  }, [semitoneShift]);
 
   return {
-    updateSemitoneShift,
-    playNote,
-    stopNote,
+    playNote: (eventKey) => {
+      audioManagerRef.current?.playNote(eventKey);
+    },
+    stopNote: (eventKey) => {
+      audioManagerRef.current?.stopNote(eventKey);
+    },
   };
 };
