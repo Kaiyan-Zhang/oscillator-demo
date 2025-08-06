@@ -1,53 +1,33 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useAudioContext } from "./AudioContextWrapper.jsx";
+import React, { useState, useEffect } from "react";
 import Key from "./Key.jsx";
 import {
-  keyToNoteMap,
   keyboardLayouts,
   getFullNoteName,
-  isAlpha,
   isNoteKey,
+  isAlpha,
 } from "./utils/musicUtils";
-import AudioManager from "./utils/audioUtils";
+import { useAudioContext } from "./AudioContextWrapper.jsx";
+import { useAudioManagerRef } from "./hooks/useAudioManagerRef.jsx";
 
 export const Keyboard = () => {
-  // 使用自定义 Hook 获取音频上下文
-  const audioContext = useAudioContext();
-
   const [activeKeys, setActiveKeys] = useState(new Set());
   const [semitoneShift, setSemitoneShift] = useState(0);
-  const audioManagerRef = useRef(null);
+  const audioContext = useAudioContext();
+  const { updateSemitoneShift, playNote, stopNote } = useAudioManagerRef({
+    audioContext,
+  });
 
-  // 初始化音频管理器
   useEffect(() => {
-    if (!audioContext) return;
+    updateSemitoneShift(semitoneShift);
+  }, [semitoneShift, updateSemitoneShift]);
 
-    audioManagerRef.current = new AudioManager(audioContext);
-    audioManagerRef.current.initOscillators(keyToNoteMap, semitoneShift);
-
-    // 组件卸载时清理
-    return () => {
-      audioManagerRef.current?.cleanup();
-    };
-  }, [audioContext]);
-
-  // 当半音偏移改变时更新振荡器频率
-  useEffect(() => {
-    if (!audioManagerRef.current) return;
-    audioManagerRef.current.updateFrequencies(keyToNoteMap, semitoneShift);
-  }, [semitoneShift]);
-
-  // 播放音符
-  const playNote = (key) => {
-    if (!isNoteKey(key)) return;
-    audioManagerRef.current?.playNote(key);
+  const handlePlayNote = (key) => {
+    playNote(key);
     setActiveKeys((prev) => new Set(prev).add(key));
   };
 
-  // 停止音符
-  const stopNote = (key) => {
-    if (!isNoteKey(key)) return;
-    audioManagerRef.current?.stopNote(key);
+  const handleStopNote = (key) => {
+    stopNote(key);
     setActiveKeys((prev) => {
       const newSet = new Set(prev);
       newSet.delete(key);
@@ -55,17 +35,16 @@ export const Keyboard = () => {
     });
   };
 
-  // 处理键盘事件 - 保持不变
+  // 处理键盘事件 - 保持不变，但调用新的处理函数
   useEffect(() => {
     const handleKeyDown = (event) => {
       const key = event.key.toLowerCase();
-    
-      // if (keyToNoteMap[key] !== undefined) {
+
       if (isNoteKey(key)) {
         event.preventDefault();
-        playNote(key);
+        handlePlayNote(key);
       }
-    
+
       // 半音控制代码保持不变
       if (event.key === "ArrowUp") {
         event.preventDefault();
@@ -87,11 +66,10 @@ export const Keyboard = () => {
 
     const handleKeyUp = (event) => {
       const key = event.key.toLowerCase();
-    
-      // if (keyToNoteMap[key]) {
+
       if (isNoteKey(key)) {
         event.preventDefault();
-        stopNote(key);
+        handleStopNote(key);
       }
     };
 
@@ -102,7 +80,7 @@ export const Keyboard = () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [semitoneShift]);
+  }, [semitoneShift, handlePlayNote, handleStopNote]);
 
   // 渲染键盘 - 保持不变
   return (

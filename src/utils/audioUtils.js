@@ -11,8 +11,8 @@ class AudioManager {
   // 初始化所有振荡器
   initOscillators(keyToNoteMap, semitoneShift = 0) {
     Object.keys(keyToNoteMap).forEach((key) => {
-      const noteValue = keyToNoteMap[key];
-      const frequency = getFrequency(noteValue, semitoneShift);
+      const keyNoteInt = keyToNoteMap[key]; // 将noteValue改为keyNoteInt
+      const frequency = getFrequency(keyNoteInt, semitoneShift);
 
       const oscillator = this.audioContext.createOscillator();
       const gainNode = this.audioContext.createGain();
@@ -36,8 +36,8 @@ class AudioManager {
   // 更新振荡器频率（半音偏移改变时）
   updateFrequencies(keyToNoteMap, semitoneShift) {
     Object.keys(this.oscillators).forEach((key) => {
-      const noteValue = keyToNoteMap[key];
-      const frequency = getFrequency(noteValue, semitoneShift);
+      const keyNoteInt = keyToNoteMap[key]; // 将noteValue改为keyNoteInt
+      const frequency = getFrequency(keyNoteInt, semitoneShift);
       this.oscillators[key].frequency.setValueAtTime(
         frequency,
         this.audioContext.currentTime

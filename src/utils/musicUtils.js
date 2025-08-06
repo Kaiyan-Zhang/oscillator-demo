@@ -49,14 +49,18 @@ export const keyboardLayouts = [
   ["a", "s", "d", "f", "g", "h", "j"], // C4, D4, E4, F4, G4, A4, B4
 ];
 
+// 键到keyNoteInt的映射关系 (C4=0，半音为1)
+
 // 计算音符频率
 export const getFrequency = (
-  noteValue,
+  keyNoteInt, // 将noteValue改为keyNoteInt
   semitoneShift = 0,
   baseFrequency = MIDDLE_C_FREQUENCY
 ) => {
   // C4=0，每半音增加1，公式：频率 = 基准频率 * 2^(总半音数/12)
-  const totalSemitones = noteValue + semitoneShift;
+  // 修改注释中的术语
+  // keyNoteInt表示C4=0，每半音增加1，公式：频率 = 基准频率 * 2^(总半音数/12)
+  const totalSemitones = keyNoteInt + semitoneShift;
   return baseFrequency * Math.pow(2, totalSemitones / 12);
 };
 
@@ -68,10 +72,10 @@ export const getFullNoteName = (
   names = noteNames
 ) => {
   if (keyMap[key] === undefined) return null;
-  const baseNoteValue = keyMap[key];
-  const totalNoteValue = baseNoteValue + semitoneShift;
-  const octave = 4 + Math.floor(totalNoteValue / 12);
-  const noteIndex = totalNoteValue % 12;
+  const baseKeyNoteInt = keyMap[key]; // 将baseNoteValue改为baseKeyNoteInt
+  const totalKeyNoteInt = baseKeyNoteInt + semitoneShift; // 将totalNoteValue改为totalKeyNoteInt
+  const octave = 4 + Math.floor(totalKeyNoteInt / 12);
+  const noteIndex = totalKeyNoteInt % 12;
   return `${names[noteIndex]}${octave}`;
 };
 
