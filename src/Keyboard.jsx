@@ -186,6 +186,12 @@ export const Keyboard = () => {
     ["a", "s", "d", "f", "g", "h", "j"], // C4, D4, E4, F4, G4, A4, B4
   ];
 
+  // 判断字符是否为英文字母
+  const isAlpha = (char) => {
+    const code = char.charCodeAt(0);
+    return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+  };
+
   // 渲染键盘
   return (
     <div
@@ -234,12 +240,11 @@ export const Keyboard = () => {
                   {/* 在第三个键(索引为2)和第四个键(索引为3)之间添加间隔 */}
                   {keyIndex === 3 && <div style={{ width: "15px" }}></div>}
                   <Key
-                    keyValue={key}
-                    noteName={getNoteName(key)}
+                    rightUpCornerTag={getNoteName(key)}
                     isActive={activeKeys.has(key)}
-                    onPlay={() => playNote(key)}
-                    onStop={() => stopNote(key)}
-                  />
+                  >
+                    {isAlpha(key) ? key.toUpperCase() : key}
+                  </Key>
                 </React.Fragment>
               ))}
             </div>
