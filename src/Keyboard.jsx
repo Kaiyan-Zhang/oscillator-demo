@@ -179,20 +179,11 @@ export const Keyboard = () => {
     };
   }, [semitoneShift]);
 
-  // 键盘布局配置 - 将每个八度的键分为CDE和FGAB两组
+  // 键盘布局配置 - 简化为直接的键数组
   const keyboardLayouts = [
-    {
-      cdeKeys: ["1", "2", "3"], // C6, D6, E6
-      fgabKeys: ["4", "5", "6", "7"], // F6, G6, A6, B6
-    },
-    {
-      cdeKeys: ["q", "w", "e"], // C5, D5, E5
-      fgabKeys: ["r", "t", "y", "u"], // F5, G5, A5, B5
-    },
-    {
-      cdeKeys: ["a", "s", "d"], // C4, D4, E4
-      fgabKeys: ["f", "g", "h", "j"], // F4, G4, A4, B4
-    },
+    ["1", "2", "3", "4", "5", "6", "7"], // C6, D6, E6, F6, G6, A6, B6
+    ["q", "w", "e", "r", "t", "y", "u"], // C5, D5, E5, F5, G5, A5, B5
+    ["a", "s", "d", "f", "g", "h", "j"], // C4, D4, E4, F4, G4, A4, B4
   ];
 
   // 渲染键盘
@@ -228,7 +219,7 @@ export const Keyboard = () => {
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        {keyboardLayouts.map((layout, index) => (
+        {keyboardLayouts.map((keys, index) => (
           <div
             key={index}
             style={{
@@ -237,34 +228,19 @@ export const Keyboard = () => {
               marginLeft: `${index * 20}px`, // 为每行添加递增的左边距
             }}
           >
-            {/* 渲染CDE键 */}
             <div style={{ display: "flex", gap: "5px" }}>
-              {layout.cdeKeys.map((key) => (
-                <Key
-                  key={key}
-                  keyValue={key}
-                  noteName={getNoteName(key)}
-                  isActive={activeKeys.has(key)}
-                  onPlay={() => playNote(key)}
-                  onStop={() => stopNote(key)}
-                />
-              ))}
-            </div>
-
-            {/* 添加间隔 */}
-            <div style={{ width: "15px" }}></div>
-
-            {/* 渲染FGAB键 */}
-            <div style={{ display: "flex", gap: "5px" }}>
-              {layout.fgabKeys.map((key) => (
-                <Key
-                  key={key}
-                  keyValue={key}
-                  noteName={getNoteName(key)}
-                  isActive={activeKeys.has(key)}
-                  onPlay={() => playNote(key)}
-                  onStop={() => stopNote(key)}
-                />
+              {keys.map((key, keyIndex) => (
+                <React.Fragment key={key}>
+                  {/* 在第三个键(索引为2)和第四个键(索引为3)之间添加间隔 */}
+                  {keyIndex === 3 && <div style={{ width: "15px" }}></div>}
+                  <Key
+                    keyValue={key}
+                    noteName={getNoteName(key)}
+                    isActive={activeKeys.has(key)}
+                    onPlay={() => playNote(key)}
+                    onStop={() => stopNote(key)}
+                  />
+                </React.Fragment>
               ))}
             </div>
           </div>
