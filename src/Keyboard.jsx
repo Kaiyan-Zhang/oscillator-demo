@@ -9,32 +9,45 @@ export const Keyboard = () => {
   // 定义中央 C (C4) 的频率
   const MIDDLE_C_FREQUENCY = 261.63;
 
-  // 定义音符名称 - 修改为CDE、FGAB
-  const noteNames = ["C", "D", "E", "F", "G", "A", "B"];
+  // 定义音符名称
+  const noteNames = [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "F",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B",
+  ];
 
-  // 定义键到音符的映射关系
+  // 定义键到音符的映射关系 (C4=0，半音为1)
   const keyToNoteMap = {
-    1: { index: 0, octaveOffset: 2 }, // C6 (高八度)
-    2: { index: 1, octaveOffset: 2 }, // D6
-    3: { index: 2, octaveOffset: 2 }, // E6
-    4: { index: 3, octaveOffset: 2 }, // F6
-    5: { index: 4, octaveOffset: 2 }, // G6
-    6: { index: 5, octaveOffset: 2 }, // A6
-    7: { index: 6, octaveOffset: 2 }, // B6
-    q: { index: 0, octaveOffset: 1 }, // C5
-    w: { index: 1, octaveOffset: 1 }, // D5
-    e: { index: 2, octaveOffset: 1 }, // E5
-    r: { index: 3, octaveOffset: 1 }, // F5
-    t: { index: 4, octaveOffset: 1 }, // G5
-    y: { index: 5, octaveOffset: 1 }, // A5
-    u: { index: 6, octaveOffset: 1 }, // B5
-    a: { index: 0, octaveOffset: 0 }, // C4 (中央C)
-    s: { index: 1, octaveOffset: 0 }, // D4
-    d: { index: 2, octaveOffset: 0 }, // E4
-    f: { index: 3, octaveOffset: 0 }, // F4
-    g: { index: 4, octaveOffset: 0 }, // G4
-    h: { index: 5, octaveOffset: 0 }, // A4
-    j: { index: 6, octaveOffset: 0 }, // B4
+    1: 24, // C6 (高八度)
+    2: 26, // D6
+    3: 28, // E6
+    4: 29, // F6
+    5: 31, // G6
+    6: 33, // A6
+    7: 35, // B6
+    q: 12, // C5
+    w: 14, // D5
+    e: 16, // E5
+    r: 17, // F5
+    t: 19, // G5
+    y: 21, // A5
+    u: 23, // B5
+    a: 0, // C4 (中央C)
+    s: 2, // D4
+    d: 4, // E4
+    f: 5, // F4
+    g: 7, // G4
+    h: 9, // A4
+    j: 11, // B4
   };
 
   const [activeKeys, setActiveKeys] = useState(new Set());
@@ -46,8 +59,8 @@ export const Keyboard = () => {
   useEffect(() => {
     // 为所有可能的键创建振荡器
     Object.keys(keyToNoteMap).forEach((key) => {
-      const { index, octaveOffset } = keyToNoteMap[key];
-      const frequency = getFrequency(index, octaveOffset);
+      const noteValue = keyToNoteMap[key];
+      const frequency = getFrequency(noteValue);
 
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -75,8 +88,8 @@ export const Keyboard = () => {
   // 当半音偏移改变时更新振荡器频率
   useEffect(() => {
     Object.keys(oscillators.current).forEach((key) => {
-      const { index, octaveOffset } = keyToNoteMap[key];
-      const frequency = getFrequency(index, octaveOffset);
+      const noteValue = keyToNoteMap[key];
+      const frequency = getFrequency(noteValue);
       oscillators.current[key].frequency.setValueAtTime(
         frequency,
         audioContext.currentTime
@@ -85,33 +98,29 @@ export const Keyboard = () => {
   }, [semitoneShift, audioContext]);
 
   // 计算音符频率
-  const getFrequency = (noteIndex, octaveOffset) => {
-    // 计算基本频率 (C4 为基准)
-    const baseFrequency = MIDDLE_C_FREQUENCY * Math.pow(2, octaveOffset);
-    // 根据音符索引计算频率 (全音阶)
-    const scaleRatio = [1, 9 / 8, 5 / 4, 4 / 3, 3 / 2, 5 / 3, 15 / 8][
-      noteIndex
-    ];
-    // 应用半音偏移
-    const shiftedFrequency =
-      baseFrequency * scaleRatio * Math.pow(2, semitoneShift / 12);
-    return shiftedFrequency;
+  const getFrequency = (noteValue) => {
+    // C4=0，每半音增加1，公式：频率 = 基准频率 * 2^(总半音数/12)
+    const totalSemitones = noteValue + semitoneShift;
+    return MIDDLE_C_FREQUENCY * Math.pow(2, totalSemitones / 12);
   };
 
-  // 获取音符名称
-  // 获取级数 (1-7)
+  // 获取音符名称 (1-7级数)
   const getNoteName = (key) => {
     if (!keyToNoteMap[key]) return null;
-    const { index } = keyToNoteMap[key];
-    return (index + 1).toString(); // 返回1-7的级数
+    const noteValue = keyToNoteMap[key];
+    // 计算在自然大调音阶中的位置 (C=1, D=2, ..., B=7)
+    const scaleDegree =
+      [1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6, 7][noteValue % 12] || 1;
+    return scaleDegree.toString();
   };
 
   // 获取完整音符名称（包含八度）
   const getFullNoteName = (key) => {
     if (!keyToNoteMap[key]) return null;
-    const { index, octaveOffset } = keyToNoteMap[key];
-    const octave = 4 + octaveOffset; // 中央C是C4
-    return `${noteNames[index]}${octave}`;
+    const noteValue = keyToNoteMap[key];
+    const octave = 4 + Math.floor(noteValue / 12); // C4=0，每12个半音升一个八度
+    const noteIndex = noteValue % 12;
+    return `${noteNames[noteIndex]}${octave}`;
   };
 
   // 播放音符
@@ -179,7 +188,7 @@ export const Keyboard = () => {
     };
   }, [semitoneShift]);
 
-  // 键盘布局配置 - 简化为直接的键数组
+  // 键盘布局配置
   const keyboardLayouts = [
     ["1", "2", "3", "4", "5", "6", "7"], // C6, D6, E6, F6, G6, A6, B6
     ["q", "w", "e", "r", "t", "y", "u"], // C5, D5, E5, F5, G5, A5, B5
@@ -254,3 +263,5 @@ export const Keyboard = () => {
     </div>
   );
 };
+
+export default Keyboard;
