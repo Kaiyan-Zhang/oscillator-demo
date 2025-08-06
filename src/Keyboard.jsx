@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useAudioContext } from "./AudioContextWrapper.jsx";
+import React, { useState, useEffect, useRef } from 'react';
+import { useAudioContext } from './AudioContextWrapper.jsx';
+import Key from './Key.jsx';
 
 export const Keyboard = () => {
   // 使用自定义 Hook 获取音频上下文
@@ -7,10 +8,10 @@ export const Keyboard = () => {
 
   // 定义中央 C (C4) 的频率
   const MIDDLE_C_FREQUENCY = 261.63;
-  
+
   // 定义音符名称
-  const noteNames = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si"];
-  
+  const noteNames = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Si'];
+
   // 定义键到音符的映射关系
   const keyToNoteMap = {
     '1': { index: 0, octaveOffset: 1 },  // C5 (高八度)
@@ -51,7 +52,7 @@ export const Keyboard = () => {
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
-      oscillator.type = "sine";
+      oscillator.type = 'sine';
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
@@ -124,26 +125,26 @@ export const Keyboard = () => {
   useEffect(() => {
     const handleKeyDown = (event) => {
       const key = event.key.toLowerCase(); // 忽略大小写
-      
+
       if (keyToNoteMap[key]) {
         event.preventDefault();
         playNote(key);
       }
 
       // 半音控制
-      if (event.key === "ArrowUp") {
+      if (event.key === 'ArrowUp') {
         event.preventDefault();
         setSemitoneShift(semitoneShift + 12); // 上移一个八度
       }
-      if (event.key === "ArrowDown") {
+      if (event.key === 'ArrowDown') {
         event.preventDefault();
         setSemitoneShift(semitoneShift - 12); // 下移一个八度
       }
-      if (event.key === "+" || event.key === "=") {
+      if (event.key === '+' || event.key === '=') {
         event.preventDefault();
         setSemitoneShift(semitoneShift + 1); // 上移一个半音
       }
-      if (event.key === "-" || event.key === "_") {
+      if (event.key === '-' || event.key === '_') {
         event.preventDefault();
         setSemitoneShift(semitoneShift - 1); // 下移一个半音
       }
@@ -151,151 +152,65 @@ export const Keyboard = () => {
 
     const handleKeyUp = (event) => {
       const key = event.key.toLowerCase();
-      
+
       if (keyToNoteMap[key]) {
         event.preventDefault();
         stopNote(key);
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("keyup", handleKeyUp);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keyup", handleKeyUp);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
     };
   }, [semitoneShift]);
+
+  // 键盘布局配置 - 移除了标签
+  const keyboardLayouts = [
+    { keys: ['1', '2', '3', '4', '5', '6', '7'] },
+    { keys: ['q', 'w', 'e', 'r', 't', 'y', 'u'] },
+    { keys: ['a', 's', 'd', 'f', 'g', 'h', 'j'] },
+  ];
 
   // 渲染键盘
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "20px",
-        fontFamily: "Arial, sans-serif",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '10px', // 减少整体内边距
+        fontFamily: 'Arial, sans-serif',
       }}
     >
       <h2>音乐键盘</h2>
-      <p>
-        数字键 1-7: 高八度 (C5-B5)<br />
-        字母键 qwertyu: 中央八度 (C4-B4，q为中央C)<br />
-        字母键 asdfghj: 低八度 (C3-B3)
-      </p>
-      <p>方向键上下: 改变八度 | +/-键: 改变半音</p>
-      <p>当前半音偏移: {semitoneShift}</p>
-      
-      <p style={{ marginTop: "10px", fontWeight: "bold", color: "#4CAF50" }}>
+      <p style={{ marginBottom: '10px' }}>方向键上下: 改变八度 | +/-键: 改变半音</p>
+      <p style={{ marginBottom: '15px' }}>当前半音偏移: {semitoneShift}</p>
+
+      <p style={{ marginTop: '5px', marginBottom: '15px', fontWeight: 'bold', color: '#4CAF50' }}>
         {Array.from(activeKeys).length > 0
-          ? `当前按下: ${Array.from(activeKeys).map(key => `${key} (${getNoteName(key)})`).join(", ")}`
-          : "未按下任何键"}
+          ? `当前按下: ${Array.from(activeKeys).map(key => `${key} (${getNoteName(key)})`).join(', ')}`
+          : '未按下任何键'}
       </p>
-      
-      {/* 高八度键盘 (数字键) */}
-      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-        {["1", "2", "3", "4", "5", "6", "7"].map((key) => (
-          <button
-            key={`high-${key}`}
-            style={{
-              width: "60px",
-              height: "120px",
-              fontSize: "18px",
-              backgroundColor: activeKeys.has(key) ? "#4CAF50" : "#f0f0f0",
-              border: activeKeys.has(key) ? "3px solid #2E7D32" : "1px solid #ccc",
-              borderRadius: "5px",
-              cursor: "pointer",
-              boxShadow:
-                activeKeys.has(key)
-                  ? "0 0 15px rgba(76, 175, 80, 0.7)" : "0 2px 4px rgba(0,0,0,0.1)",
-              transform:
-                activeKeys.has(key)
-                  ? "scale(1.05) translateY(-5px)" : "scale(1) translateY(0)",
-              transition: "all 0.2s ease-in-out",
-              outline: "none",
-              zIndex: activeKeys.has(key) ? 1 : 0,
-            }}
-            onClick={() => playNote(key)}
-            onMouseDown={() => playNote(key)}
-            onMouseUp={() => stopNote(key)}
-            onMouseLeave={() => stopNote(key)}
-          >
-            {key}
-            <br />
-            {getNoteName(key)}
-          </button>
-        ))}
-      </div>
-      
-      {/* 中央八度键盘 (qwertyu) */}
-      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-        {["q", "w", "e", "r", "t", "y", "u"].map((key) => (
-          <button
-            key={`middle-${key}`}
-            style={{
-              width: "60px",
-              height: "120px",
-              fontSize: "18px",
-              backgroundColor: activeKeys.has(key) ? "#2196F3" : "#e3f2fd",
-              border: activeKeys.has(key) ? "3px solid #0D47A1" : "1px solid #90caf9",
-              borderRadius: "5px",
-              cursor: "pointer",
-              boxShadow:
-                activeKeys.has(key)
-                  ? "0 0 15px rgba(33, 150, 243, 0.7)" : "0 2px 4px rgba(0,0,0,0.1)",
-              transform:
-                activeKeys.has(key)
-                  ? "scale(1.05) translateY(-5px)" : "scale(1) translateY(0)",
-              transition: "all 0.2s ease-in-out",
-              outline: "none",
-              zIndex: activeKeys.has(key) ? 1 : 0,
-              fontWeight: key === 'q' ? 'bold' : 'normal', // q键加粗显示
-            }}
-            onClick={() => playNote(key)}
-            onMouseDown={() => playNote(key)}
-            onMouseUp={() => stopNote(key)}
-            onMouseLeave={() => stopNote(key)}
-          >
-            {key}
-            <br />
-            {getNoteName(key)}
-          </button>
-        ))}
-      </div>
-      
-      {/* 低八度键盘 (asdfghj) */}
-      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-        {["a", "s", "d", "f", "g", "h", "j"].map((key) => (
-          <button
-            key={`low-${key}`}
-            style={{
-              width: "60px",
-              height: "120px",
-              fontSize: "18px",
-              backgroundColor: activeKeys.has(key) ? "#FF9800" : "#fff3e0",
-              border: activeKeys.has(key) ? "3px solid #E65100" : "1px solid #ffcc80",
-              borderRadius: "5px",
-              cursor: "pointer",
-              boxShadow:
-                activeKeys.has(key)
-                  ? "0 0 15px rgba(255, 152, 0, 0.7)" : "0 2px 4px rgba(0,0,0,0.1)",
-              transform:
-                activeKeys.has(key)
-                  ? "scale(1.05) translateY(-5px)" : "scale(1) translateY(0)",
-              transition: "all 0.2s ease-in-out",
-              outline: "none",
-              zIndex: activeKeys.has(key) ? 1 : 0,
-            }}
-            onClick={() => playNote(key)}
-            onMouseDown={() => playNote(key)}
-            onMouseUp={() => stopNote(key)}
-            onMouseLeave={() => stopNote(key)}
-          >
-            {key}
-            <br />
-            {getNoteName(key)}
-          </button>
+
+      {/* 紧凑布局：减少间距和边距 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {keyboardLayouts.map((layout, index) => (
+          <div key={index} style={{ display: 'flex', gap: '5px' }}> {/* 减少键之间的间距 */}
+            {layout.keys.map((key) => (
+              <Key
+                key={key}
+                keyValue={key}
+                noteName={getNoteName(key)}
+                isActive={activeKeys.has(key)}
+                onPlay={() => playNote(key)}
+                onStop={() => stopNote(key)}
+              />
+            ))}
+          </div>
         ))}
       </div>
     </div>
