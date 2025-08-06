@@ -10,7 +10,7 @@ import { useAudioContext } from "./AudioContextWrapper.jsx";
 import { useAudioManagerRef } from "./hooks/useAudioManagerRef.jsx";
 
 export const Keyboard = () => {
-  const [activeKeys, setActiveKeys] = useState(new Set());
+  const [activeEventKey, setActiveEventKey] = useState(new Set());
   const [semitoneShift, setSemitoneShift] = useState(0);
   const audioContext = useAudioContext();
   const { updateSemitoneShift, playNote, stopNote } = useAudioManagerRef({
@@ -21,27 +21,27 @@ export const Keyboard = () => {
     updateSemitoneShift(semitoneShift);
   }, [semitoneShift, updateSemitoneShift]);
 
-  const handlePlayNote = (key) => {
-    playNote(key);
-    setActiveKeys((prev) => new Set(prev).add(key));
+  const handlePlayNote = (eventKey) => {
+    playNote(eventKey);
+    setActiveEventKey((prev) => new Set(prev).add(eventKey));
   };
 
-  const handleStopNote = (key) => {
-    stopNote(key);
-    setActiveKeys((prev) => {
+  const handleStopNote = (eventKey) => {
+    stopNote(eventKey);
+    setActiveEventKey((prev) => {
       const newSet = new Set(prev);
-      newSet.delete(key);
+      newSet.delete(eventKey);
       return newSet;
     });
   };
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      const key = event.key.toLowerCase();
+      const eventKey = event.key.toLowerCase();
 
-      if (isNoteKey(key)) {
+      if (isNoteKey(eventKey)) {
         event.preventDefault();
-        handlePlayNote(key);
+        handlePlayNote(eventKey);
       }
 
       if (event.key === "ArrowUp") {
@@ -63,11 +63,11 @@ export const Keyboard = () => {
     };
 
     const handleKeyUp = (event) => {
-      const key = event.key.toLowerCase();
+      const eventKey = event.key.toLowerCase();
 
-      if (isNoteKey(key)) {
+      if (isNoteKey(eventKey)) {
         event.preventDefault();
-        handleStopNote(key);
+        handleStopNote(eventKey);
       }
     };
 
@@ -182,9 +182,9 @@ export const Keyboard = () => {
           color: "#4CAF50",
         }}
       >
-        {Array.from(activeKeys).length > 0
-          ? `${Array.from(activeKeys)
-              .map((key) => getFullNoteName(key, semitoneShift))
+        {Array.from(activeEventKey).length > 0
+          ? `${Array.from(activeEventKey)
+              .map((eventKey) => getFullNoteName(eventKey, semitoneShift))
               .join(", ")}`
           : "--"}
       </p>
@@ -205,7 +205,7 @@ export const Keyboard = () => {
                   {keyIndex === 3 && <div style={{ width: "15px" }}></div>}
                   <Key
                     rightUpCornerTag={keyIndex + 1}
-                    isActive={activeKeys.has(key)}
+                    isActive={activeEventKey.has(key)}
                   >
                     {isAlpha(key) ? key.toUpperCase() : key}
                   </Key>
