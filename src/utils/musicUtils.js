@@ -56,21 +56,13 @@ export const getFrequency = (noteValue, semitoneShift = 0, baseFrequency = MIDDL
   return baseFrequency * Math.pow(2, totalSemitones / 12);
 };
 
-// 获取音符名称 (1-7级数)
-export const getNoteName = (key, keyMap = keyToNoteMap) => {
-  if (!keyMap[key]) return null;
-  const noteValue = keyMap[key];
-  // 计算在自然大调音阶中的位置 (C=1, D=2, ..., B=7)
-  const scaleDegree = [1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6, 7][noteValue % 12] || 1;
-  return scaleDegree.toString();
-};
-
 // 获取完整音符名称（包含八度）
-export const getFullNoteName = (key, keyMap = keyToNoteMap, names = noteNames) => {
+export const getFullNoteName = (key, semitoneShift = 0, keyMap = keyToNoteMap, names = noteNames) => {
   if (!keyMap[key]) return null;
-  const noteValue = keyMap[key];
-  const octave = 4 + Math.floor(noteValue / 12); // C4=0，每12个半音升一个八度
-  const noteIndex = noteValue % 12;
+  const baseNoteValue = keyMap[key];
+  const totalNoteValue = baseNoteValue + semitoneShift;
+  const octave = 4 + Math.floor(totalNoteValue / 12); // C4=0，每12个半音升一个八度
+  const noteIndex = totalNoteValue % 12;
   return `${names[noteIndex]}${octave}`;
 };
 

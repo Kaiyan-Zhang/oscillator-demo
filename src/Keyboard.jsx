@@ -2,12 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAudioContext } from "./AudioContextWrapper.jsx";
 import Key from "./Key.jsx";
 import {
-  MIDDLE_C_FREQUENCY,
-  noteNames,
   keyToNoteMap,
   keyboardLayouts,
   getFrequency,
-  getNoteName,
   getFullNoteName,
   isAlpha,
 } from "./utils/musicUtils";
@@ -100,11 +97,11 @@ export const Keyboard = () => {
         event.preventDefault();
         setSemitoneShift(semitoneShift - 12); // 下移一个八度
       }
-      if (event.key === "+" || event.key === "=") {
+      if (event.key === "ArrowRight") {
         event.preventDefault();
         setSemitoneShift(semitoneShift + 1); // 上移一个半音
       }
-      if (event.key === "-" || event.key === "_") {
+      if (event.key === "ArrowLeft") {
         event.preventDefault();
         setSemitoneShift(semitoneShift - 1); // 下移一个半音
       }
@@ -140,10 +137,91 @@ export const Keyboard = () => {
       }}
     >
       <h2>音乐键盘</h2>
-      <p style={{ marginBottom: "10px" }}>
-        方向键上下: 改变八度 | +/-键: 改变半音
-      </p>
       <p style={{ marginBottom: "15px" }}>当前半音偏移: {semitoneShift}</p>
+
+      {/* 添加方向键提示图形 */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          marginBottom: "15px",
+          fontFamily: "monospace",
+        }}
+      >
+        {/* 上键 */}
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            backgroundColor: "#f0f0f0",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: "5px",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            fontSize: "20px",
+          }}
+        >
+          ↑
+        </div>
+
+        {/* 左、下、右键水平排列 */}
+        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: "#f0f0f0",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              fontSize: "20px",
+            }}
+          >
+            ←
+          </div>
+
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: "#f0f0f0",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              fontSize: "20px",
+            }}
+          >
+            ↓
+          </div>
+
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: "#f0f0f0",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              fontSize: "20px",
+            }}
+          >
+            →
+          </div>
+        </div>
+
+        <div style={{ marginTop: "10px", fontSize: "12px", color: "#666" }}>
+          使用方向键调整半音
+        </div>
+      </div>
 
       <p
         style={{
@@ -154,10 +232,10 @@ export const Keyboard = () => {
         }}
       >
         {Array.from(activeKeys).length > 0
-          ? `当前按下: ${Array.from(activeKeys)
-              .map((key) => `${getFullNoteName(key)}`)
+          ? `${Array.from(activeKeys)
+              .map((key) => getFullNoteName(key, semitoneShift))
               .join(", ")}`
-          : "未按下任何键"}
+          : "--"}
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -176,7 +254,7 @@ export const Keyboard = () => {
                   {/* 在第三个键(索引为2)和第四个键(索引为3)之间添加间隔 */}
                   {keyIndex === 3 && <div style={{ width: "15px" }}></div>}
                   <Key
-                    rightUpCornerTag={getNoteName(key)}
+                    rightUpCornerTag={keyIndex + 1}
                     isActive={activeKeys.has(key)}
                   >
                     {isAlpha(key) ? key.toUpperCase() : key}
