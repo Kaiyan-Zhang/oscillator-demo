@@ -6,10 +6,8 @@ import React, {
   useContext,
 } from "react";
 
-// 创建音频上下文的 Context
 const AudioContext = createContext(null);
 
-// 创建激活状态的 Context
 const AudioContextActiveContext = createContext(false);
 
 export const AudioContextWrapper = ({ children }) => {
@@ -17,13 +15,10 @@ export const AudioContextWrapper = ({ children }) => {
   const audioContext = useRef(null);
 
   useEffect(() => {
-    // 创建音频上下文
     audioContext.current = new (window.AudioContext ||
       window.webkitAudioContext)();
 
-    // 激活音频上下文的函数
     const activateAudioContext = (event) => {
-      // 只在按下回车键时激活
       if (event.type === "keydown" && event.key !== "Enter") {
         return;
       }
@@ -35,7 +30,6 @@ export const AudioContextWrapper = ({ children }) => {
       }
     };
 
-    // 监听键盘事件
     document.addEventListener("keydown", activateAudioContext);
 
     return () => {
@@ -62,7 +56,6 @@ export const AudioContextWrapper = ({ children }) => {
   );
 };
 
-// 自定义 Hook，用于获取音频上下文
 export const useAudioContext = () => {
   const context = useContext(AudioContext);
   if (context === undefined) {
@@ -73,7 +66,6 @@ export const useAudioContext = () => {
   return context;
 };
 
-// 自定义 Hook，用于获取音频上下文激活状态
 export const useAudioContextActive = () => {
   const context = useContext(AudioContextActiveContext);
   if (context === undefined) {

@@ -35,7 +35,6 @@ export const Keyboard = () => {
     });
   };
 
-  // 处理键盘事件 - 保持不变，但调用新的处理函数
   useEffect(() => {
     const handleKeyDown = (event) => {
       const key = event.key.toLowerCase();
@@ -45,22 +44,21 @@ export const Keyboard = () => {
         handlePlayNote(key);
       }
 
-      // 半音控制代码保持不变
       if (event.key === "ArrowUp") {
         event.preventDefault();
-        setSemitoneShift(semitoneShift + 12); // 上移一个八度
+        setSemitoneShift(semitoneShift + 12);
       }
       if (event.key === "ArrowDown") {
         event.preventDefault();
-        setSemitoneShift(semitoneShift - 12); // 下移一个八度
+        setSemitoneShift(semitoneShift - 12);
       }
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        setSemitoneShift(semitoneShift + 1); // 上移一个半音
+        setSemitoneShift(semitoneShift + 1);
       }
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        setSemitoneShift(semitoneShift - 1); // 下移一个半音
+        setSemitoneShift(semitoneShift - 1);
       }
     };
 
@@ -82,7 +80,6 @@ export const Keyboard = () => {
     };
   }, [semitoneShift, handlePlayNote, handleStopNote]);
 
-  // 渲染键盘 - 保持不变
   return (
     <div
       style={{
@@ -96,7 +93,6 @@ export const Keyboard = () => {
       <h2>音乐键盘</h2>
       <p style={{ marginBottom: "15px" }}>当前半音偏移: {semitoneShift}</p>
 
-      {/* 添加方向键提示图形 */}
       <div
         style={{
           display: "flex",
@@ -106,7 +102,6 @@ export const Keyboard = () => {
           fontFamily: "monospace",
         }}
       >
-        {/* 上键 */}
         <div
           style={{
             width: "40px",
@@ -124,7 +119,6 @@ export const Keyboard = () => {
           ↑
         </div>
 
-        {/* 左、下、右键水平排列 */}
         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
           <div
             style={{
@@ -202,13 +196,12 @@ export const Keyboard = () => {
             style={{
               display: "flex",
               alignItems: "center",
-              marginLeft: `${index * 20}px`, // 为每行添加递增的左边距
+              marginLeft: `${index * 20}px`,
             }}
           >
             <div style={{ display: "flex", gap: "5px" }}>
               {keys.map((key, keyIndex) => (
                 <React.Fragment key={key}>
-                  {/* 在第三个键(索引为2)和第四个键(索引为3)之间添加间隔 */}
                   {keyIndex === 3 && <div style={{ width: "15px" }}></div>}
                   <Key
                     rightUpCornerTag={keyIndex + 1}

@@ -18,7 +18,6 @@ const Key = ({ rightUpCornerTag, isActive, children }) => {
         position: "relative",
       }}
     >
-      {/* 中央大字符 - 使用children */}
       <span
         style={{
           fontSize: "36px",
@@ -28,7 +27,6 @@ const Key = ({ rightUpCornerTag, isActive, children }) => {
         {children}
       </span>
 
-      {/* 右上角小数字 */}
       <span
         style={{
           position: "absolute",
