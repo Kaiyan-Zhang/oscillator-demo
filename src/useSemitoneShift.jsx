@@ -4,7 +4,8 @@ const useSemitoneShift = () => {
   const [semitoneShift, setSemitoneShift] = useState(0);
 
   useEffect(() => {
-    const handleArrowKeys = ({ key: eventKey }) => {
+    const handleArrowKeys = ({ key: eventKey, repeat }) => {
+      if (repeat) return;
       if (eventKey === "ArrowUp") {
         setSemitoneShift((semitoneShift) => semitoneShift + 12);
       }

@@ -15,8 +15,8 @@ export const Keyboard = () => {
   const { semitoneShift } = useSemitoneShift();
   const audioManagerRef = useAudioManager(semitoneShift);
   useEffect(() => {
-    const handleNoteKeyDown = ({ key: eventKey }) => {
-      if (isNoteKey(eventKey)) {
+    const handleNoteKeyDown = ({ key: eventKey, repeat }) => {
+      if (!repeat && isNoteKey(eventKey)) {
         audioManagerRef.current?.playNote(eventKey);
         setActiveEventKey((prev) => new Set(prev).add(eventKey));
       }
