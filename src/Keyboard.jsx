@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Key from "./Key.jsx";
 import {
   keyboardLayouts,
@@ -6,57 +6,25 @@ import {
   isNoteKey,
   isAlpha,
 } from "./utils/musicUtils";
-import { useAudioContext } from "./AudioContextWrapper.jsx";
-import { useAudioManagerRef } from "./hooks/useAudioManagerRef.jsx";
-
-const useSemitoneShift = () => {
-  const [semitoneShift, setSemitoneShift] = useState(0);
-
-  useEffect(() => {
-    const handleArrowKeys = ({ key: eventKey }) => {
-      if (eventKey === "ArrowUp") {
-        setSemitoneShift((semitoneShift) => semitoneShift + 12);
-      }
-      if (eventKey === "ArrowDown") {
-        setSemitoneShift((semitoneShift) => semitoneShift - 12);
-      }
-      if (eventKey === "ArrowRight") {
-        setSemitoneShift((semitoneShift) => semitoneShift + 1);
-      }
-      if (eventKey === "ArrowLeft") {
-        setSemitoneShift((semitoneShift) => semitoneShift - 1);
-      }
-    };
-    document.addEventListener("keydown", handleArrowKeys);
-    return () => {
-      document.removeEventListener("keydown", handleArrowKeys);
-    };
-  }, []);
-  return {
-    semitoneShift,
-  };
-};
+import { useAudioManager } from "./useAudioManager.jsx";
+import useSemitoneShift from "./useSemitoneShift.jsx";
+import { SemitoneShiftChangerGraph } from "./SemitoneShiftChangerGraph.jsx";
 
 export const Keyboard = () => {
   const [activeEventKey, setActiveEventKey] = useState(new Set());
-  const audioContext = useAudioContext();
   const { semitoneShift } = useSemitoneShift();
-  const { playNote, stopNote } = useAudioManagerRef({
-    semitoneShift,
-    audioContext,
-  });
-
+  const audioManagerRef = useAudioManager(semitoneShift);
   useEffect(() => {
     const handleNoteKeyDown = ({ key: eventKey }) => {
       if (isNoteKey(eventKey)) {
-        playNote(eventKey);
+        audioManagerRef.current?.playNote(eventKey);
         setActiveEventKey((prev) => new Set(prev).add(eventKey));
       }
     };
 
     const handleNoteKeyUp = ({ key: eventKey }) => {
       if (isNoteKey(eventKey)) {
-        stopNote(eventKey);
+        audioManagerRef.current?.stopNote(eventKey);
         setActiveEventKey((prev) => {
           const newSet = new Set(prev);
           newSet.delete(eventKey);
@@ -72,7 +40,7 @@ export const Keyboard = () => {
       document.removeEventListener("keydown", handleNoteKeyDown);
       document.removeEventListener("keyup", handleNoteKeyUp);
     };
-  }, [playNote, stopNote]);
+  }, []);
 
   return (
     <div
@@ -87,86 +55,7 @@ export const Keyboard = () => {
       <h2>音乐键盘</h2>
       <p style={{ marginBottom: "15px" }}>当前半音偏移: {semitoneShift}</p>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          marginBottom: "15px",
-          fontFamily: "monospace",
-        }}
-      >
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            backgroundColor: "#f0f0f0",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: "5px",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-            fontSize: "20px",
-          }}
-        >
-          ↑
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              backgroundColor: "#f0f0f0",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              fontSize: "20px",
-            }}
-          >
-            ←
-          </div>
-
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              backgroundColor: "#f0f0f0",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              fontSize: "20px",
-            }}
-          >
-            ↓
-          </div>
-
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              backgroundColor: "#f0f0f0",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              fontSize: "20px",
-            }}
-          >
-            →
-          </div>
-        </div>
-
-        <div style={{ marginTop: "10px", fontSize: "12px", color: "#666" }}>
-          使用方向键调整半音
-        </div>
-      </div>
+      <SemitoneShiftChangerGraph />
 
       <p
         style={{

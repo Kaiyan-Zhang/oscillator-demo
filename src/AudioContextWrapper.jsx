@@ -58,20 +58,5 @@ export const AudioContextWrapper = ({ children }) => {
 
 export const useAudioContext = () => {
   const context = useContext(AudioContext);
-  if (context === undefined) {
-    throw new Error(
-      "useAudioContext must be used within an AudioContextWrapper"
-    );
-  }
-  return context;
-};
-
-export const useAudioContextActive = () => {
-  const context = useContext(AudioContextActiveContext);
-  if (context === undefined) {
-    throw new Error(
-      "useAudioContextActive must be used within an AudioContextWrapper"
-    );
-  }
   return context;
 };

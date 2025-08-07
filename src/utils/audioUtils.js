@@ -1,14 +1,11 @@
 import { getFrequency } from "./musicUtils";
 import { eventKeyToSemitone } from "./musicUtils.js";
 
-class AudioManager {
+export class AudioManager {
   constructor(audioContext) {
     this.audioContext = audioContext;
     this.oscillators = {};
     this.gainNodes = {};
-  }
-
-  initOscillators() {
     Object.keys(eventKeyToSemitone).forEach((eventKey) => {
       const semitone = eventKeyToSemitone[eventKey];
       const frequency = getFrequency(semitone, 0);
@@ -67,5 +64,3 @@ class AudioManager {
     this.gainNodes = {};
   }
 }
-
-export default AudioManager;
