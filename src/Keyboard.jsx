@@ -6,19 +6,68 @@ import {
   isNoteKey,
   isAlpha,
   eventKeyToSemitone,
+  noteNames,
+  MIDDLE_C_FREQUENCY,
 } from "./utils/musicUtils";
 import { useAudioManager } from "./useAudioManager.jsx";
 import useSemitoneShift from "./useSemitoneShift.jsx";
 import { SemitoneShiftChangerGraph } from "./SemitoneShiftChangerGraph.jsx";
+import { useAudioContext } from "./AudioContextWrapper.jsx";
 
 export const Keyboard = () => {
   const [activeEventKey, setActiveEventKey] = useState(new Set());
   const { semitoneShift } = useSemitoneShift();
   const audioManagerRef = useAudioManager(semitoneShift);
+  const audioContext = useAudioContext();
   // 新增录音状态和半音栈
   const [isRecording, setIsRecording] = useState(false);
   const [semitoneStack, setSemitoneStack] = useState([]);
   const [recordedNotes, setRecordedNotes] = useState([]);
+  // 新增播放状态
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playTimeoutRef = useRef(null);
+
+  // 播放录音函数
+  const playRecording = () => {
+    if (semitoneStack.length === 0 || isRecording || isPlaying) return;
+
+    setIsPlaying(true);
+    let currentTime = audioContext.currentTime;
+    const noteDuration = 0.2; // 每个音符播放0.2秒
+
+    semitoneStack.forEach((semitone, index) => {
+      // 计算频率
+      const frequency = MIDDLE_C_FREQUENCY * Math.pow(2, semitone / 12);
+
+      // 创建振荡器和增益节点
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, currentTime + index * noteDuration);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      gainNode.gain.setValueAtTime(0.1, currentTime + index * noteDuration);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + (index + 1) * noteDuration);
+
+      oscillator.start(currentTime + index * noteDuration);
+      oscillator.stop(currentTime + (index + 1) * noteDuration);
+    });
+
+    // 设置播放结束的定时器
+    playTimeoutRef.current = setTimeout(() => {
+      setIsPlaying(false);
+    }, semitoneStack.length * noteDuration * 1000);
+  };
+
+  // 清除播放定时器
+  useEffect(() => {
+    return () => {
+      if (playTimeoutRef.current) {
+        clearTimeout(playTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleNoteKeyDown = ({ key: eventKey, repeat }) => {
@@ -50,7 +99,7 @@ export const Keyboard = () => {
       }
     };
 
-    // 处理回车键和backspace键
+    // 处理回车键、backspace键和空格键
     const handleSpecialKeys = ({ key: eventKey, repeat }) => {
       if (repeat) return;
 
@@ -69,6 +118,11 @@ export const Keyboard = () => {
         setSemitoneStack((prev) => prev.slice(0, -1));
         setRecordedNotes((prev) => prev.slice(0, -1));
       }
+
+      // 空格键播放录音
+      if (eventKey === " ") {
+        playRecording();
+      }
     };
 
     document.addEventListener("keydown", handleNoteKeyDown);
@@ -80,7 +134,7 @@ export const Keyboard = () => {
       document.removeEventListener("keyup", handleNoteKeyUp);
       document.removeEventListener("keydown", handleSpecialKeys);
     };
-  }, [isRecording, semitoneStack.length, semitoneShift]);
+  }, [isRecording, semitoneStack.length, semitoneShift, isPlaying]);
 
   return (
     <div
@@ -95,30 +149,41 @@ export const Keyboard = () => {
       <h2>音乐键盘</h2>
       <p style={{ marginBottom: "15px" }}>当前半音偏移: {semitoneShift}</p>
 
-      {/* 录音状态显示 */}
+      {/* 录音和播放状态显示 */}
       <div
         style={{
           padding: "8px 16px",
           borderRadius: "4px",
           marginBottom: "10px",
-          backgroundColor: isRecording ? "#ffcccc" : "#ccffcc",
+          backgroundColor: isRecording ? "#ffcccc" : isPlaying ? "#ffffcc" : "#ccffcc",
           fontWeight: "bold",
         }}
       >
-        {isRecording ? "录音中... 再次按Enter结束录音" : "准备录音 - 按Enter开始"}
+        {isRecording
+          ? "录音中... 再次按Enter结束录音"
+          : isPlaying
+          ? "播放中... 每个音符播放0.2秒"
+          : "准备录音 - 按Enter开始 / 按空格键播放录音"}
       </div>
 
       {/* 录音内容显示 */}
-      {isRecording && (
+      {(isRecording || semitoneStack.length > 0) && (
         <div style={{ marginBottom: "15px", textAlign: "center" }}>
           <p style={{ fontWeight: "bold" }}>已录音符:</p>
           <p>{recordedNotes.join(" → ") || "暂无"}</p>
           <p style={{ marginTop: "5px", color: "#666" }}>
             半音栈: [{semitoneStack.join(", ")}]
           </p>
-          <p style={{ marginTop: "5px", fontSize: "12px", color: "#666" }}>
-            按Backspace删除最后一个音符
-          </p>
+          {isRecording && (
+            <p style={{ marginTop: "5px", fontSize: "12px", color: "#666" }}>
+              按Backspace删除最后一个音符
+            </p>
+          )}
+          {!isRecording && semitoneStack.length > 0 && !isPlaying && (
+            <p style={{ marginTop: "5px", fontSize: "12px", color: "#666" }}>
+              按空格键播放录音（每次播放都从头开始）
+            </p>
+          )}
         </div>
       )}
 
