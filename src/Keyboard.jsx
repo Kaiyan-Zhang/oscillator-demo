@@ -14,6 +14,7 @@ import { useAudioManager } from "./useAudioManager.jsx";
 import useSemitoneShift from "./useSemitoneShift.jsx";
 import { SemitoneShiftChangerGraph } from "./SemitoneShiftChangerGraph.jsx";
 import { useAudioContext } from "./AudioContextWrapper.jsx";
+import KeyboardLayout from "./KeyboardLayout.jsx";
 
 export const Keyboard = () => {
   const [activeEventKey, setActiveEventKey] = useState(new Set());
@@ -266,32 +267,7 @@ export const Keyboard = () => {
               .join(", ")}`
           : "--"}
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        {keyboardLayouts.map((keys, index) => (
-          <div
-            key={index}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              marginLeft: `${index * 20}px`,
-            }}
-          >
-            <div style={{ display: "flex", gap: "5px" }}>
-              {keys.map((key, keyIndex) => (
-                <React.Fragment key={key}>
-                  {keyIndex === 3 && <div style={{ width: "15px" }}></div>}
-                  <Key
-                    rightUpCornerTag={keyIndex + 1}
-                    isActive={activeEventKey.has(key)}
-                  >
-                    {isAlpha(key) ? key.toUpperCase() : key}
-                  </Key>
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <KeyboardLayout activeEventKey={activeEventKey} />
     </div>
   );
 };
