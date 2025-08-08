@@ -19,11 +19,11 @@ export const Keyboard = () => {
   const { semitoneShift } = useSemitoneShift();
   const audioManagerRef = useAudioManager(semitoneShift);
   const audioContext = useAudioContext();
-  // 新增录音状态和半音栈
+  // 录音状态和半音栈
   const [isRecording, setIsRecording] = useState(false);
   const [semitoneStack, setSemitoneStack] = useState([]);
   const [recordedNotes, setRecordedNotes] = useState([]);
-  // 新增播放状态
+  // 播放状态
   const [isPlaying, setIsPlaying] = useState(false);
   const playTimeoutRef = useRef(null);
 
@@ -103,14 +103,9 @@ export const Keyboard = () => {
     const handleSpecialKeys = ({ key: eventKey, repeat }) => {
       if (repeat) return;
 
-      // 回车键控制录音
+      // 回车键控制录音 - 移除了清空栈的代码
       if (eventKey === "Enter") {
         setIsRecording((prev) => !prev);
-        if (!isRecording) {
-          // 开始录音时清空栈
-          setSemitoneStack([]);
-          setRecordedNotes([]);
-        }
       }
 
       // Backspace键出栈
@@ -163,6 +158,8 @@ export const Keyboard = () => {
           ? "录音中... 再次按Enter结束录音"
           : isPlaying
           ? "播放中... 每个音符播放0.2秒"
+          : semitoneStack.length > 0
+          ? "按Enter继续录音 / 按空格键播放录音"
           : "准备录音 - 按Enter开始 / 按空格键播放录音"}
       </div>
 
@@ -181,7 +178,7 @@ export const Keyboard = () => {
           )}
           {!isRecording && semitoneStack.length > 0 && !isPlaying && (
             <p style={{ marginTop: "5px", fontSize: "12px", color: "#666" }}>
-              按空格键播放录音（每次播放都从头开始）
+              按空格键播放录音（每次播放都从头开始） | 按Enter继续录音
             </p>
           )}
         </div>
