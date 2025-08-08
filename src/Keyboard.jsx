@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Key from "./Key.jsx";
+import NoteButton from "./NoteButton.jsx"; // 导入新组件
 import {
   keyboardLayouts,
   getFullNoteName,
@@ -28,14 +29,27 @@ export const Keyboard = () => {
   const playTimeoutRef = useRef(null);
 
   // 播放录音函数
-  const playRecording = () => {
+  // 添加当前播放索引的状态
+  const [currentPlayingIndex, setCurrentPlayingIndex] = useState(-1);
+
+  // 修改播放录音函数
+  const playRecording = (startIndex = 0) => {
     if (semitoneStack.length === 0 || isRecording || isPlaying) return;
 
     setIsPlaying(true);
+    setCurrentPlayingIndex(startIndex); // 设置开始播放的索引
     let currentTime = audioContext.currentTime;
     const noteDuration = 0.2; // 每个音符播放0.2秒
 
-    semitoneStack.forEach((semitone, index) => {
+    semitoneStack.slice(startIndex).forEach((semitone, index) => {
+      // 设置当前播放索引的定时器
+      setTimeout(
+        () => {
+          setCurrentPlayingIndex(startIndex + index);
+        },
+        index * noteDuration * 1000
+      );
+
       // 计算频率
       const frequency = MIDDLE_C_FREQUENCY * Math.pow(2, semitone / 12);
 
@@ -44,20 +58,30 @@ export const Keyboard = () => {
       const gainNode = audioContext.createGain();
 
       oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(frequency, currentTime + index * noteDuration);
+      oscillator.frequency.setValueAtTime(
+        frequency,
+        currentTime + index * noteDuration
+      );
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      gainNode.gain.setValueAtTime(0.1, currentTime + index * noteDuration);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + (index + 1) * noteDuration);
+      gainNode.gain.setValueAtTime(1, currentTime + index * noteDuration);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.01,
+        currentTime + (index + 1) * noteDuration
+      );
 
       oscillator.start(currentTime + index * noteDuration);
       oscillator.stop(currentTime + (index + 1) * noteDuration);
     });
 
     // 设置播放结束的定时器
-    playTimeoutRef.current = setTimeout(() => {
-      setIsPlaying(false);
-    }, semitoneStack.length * noteDuration * 1000);
+    playTimeoutRef.current = setTimeout(
+      () => {
+        setIsPlaying(false);
+        setCurrentPlayingIndex(-1);
+      },
+      semitoneStack.slice(startIndex).length * noteDuration * 1000
+    );
   };
 
   // 清除播放定时器
@@ -143,34 +167,78 @@ export const Keyboard = () => {
     >
       <h2>音乐键盘</h2>
       <p style={{ marginBottom: "15px" }}>当前半音偏移: {semitoneShift}</p>
-
       {/* 录音和播放状态显示 */}
       <div
         style={{
           padding: "8px 16px",
           borderRadius: "4px",
           marginBottom: "10px",
-          backgroundColor: isRecording ? "#ffcccc" : isPlaying ? "#ffffcc" : "#ccffcc",
+          backgroundColor: isRecording
+            ? "#ffcccc"
+            : isPlaying
+              ? "#ffffcc"
+              : "#ccffcc",
           fontWeight: "bold",
         }}
       >
         {isRecording
           ? "录音中... 再次按Enter结束录音"
           : isPlaying
-          ? "播放中... 每个音符播放0.2秒"
-          : semitoneStack.length > 0
-          ? "按Enter继续录音 / 按空格键播放录音"
-          : "准备录音 - 按Enter开始 / 按空格键播放录音"}
+            ? "播放中... 每个音符播放0.2秒"
+            : semitoneStack.length > 0
+              ? "按Enter继续录音 / 按空格键播放录音"
+              : "准备录音 - 按Enter开始 / 按空格键播放录音"}
       </div>
-
       {/* 录音内容显示 */}
+      // 修改录音内容显示部分
       {(isRecording || semitoneStack.length > 0) && (
         <div style={{ marginBottom: "15px", textAlign: "center" }}>
           <p style={{ fontWeight: "bold" }}>已录音符:</p>
-          <p>{recordedNotes.join(" → ") || "暂无"}</p>
-          <p style={{ marginTop: "5px", color: "#666" }}>
-            半音栈: [{semitoneStack.join(", ")}]
-          </p>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
+            {recordedNotes.map((note, index) => (
+              <NoteButton
+                key={index}
+                note={note}
+                isHighlighted={isPlaying && currentPlayingIndex === index}
+                onClick={() => {
+                  // 点击播放单个音符
+                  const semitone = semitoneStack[index];
+                  const frequency =
+                    MIDDLE_C_FREQUENCY * Math.pow(2, semitone / 12);
+
+                  const oscillator = audioContext.createOscillator();
+                  const gainNode = audioContext.createGain();
+
+                  oscillator.type = "sine";
+                  oscillator.frequency.setValueAtTime(
+                    frequency,
+                    audioContext.currentTime
+                  );
+                  oscillator.connect(gainNode);
+                  gainNode.connect(audioContext.destination);
+                  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                  gainNode.gain.exponentialRampToValueAtTime(
+                    0.01,
+                    audioContext.currentTime + 0.5
+                  );
+
+                  oscillator.start();
+                  oscillator.stop(audioContext.currentTime + 0.5);
+                }}
+                onContextMenu={() => {
+                  // 右键从当前音符开始播放
+                  playRecording(index);
+                }}
+              />
+            ))}
+          </div>
+          {recordedNotes.length === 0 && <p>暂无</p>}
           {isRecording && (
             <p style={{ marginTop: "5px", fontSize: "12px", color: "#666" }}>
               按Backspace删除最后一个音符
@@ -183,9 +251,7 @@ export const Keyboard = () => {
           )}
         </div>
       )}
-
       <SemitoneShiftChangerGraph />
-
       <p
         style={{
           marginTop: "5px",
@@ -200,7 +266,6 @@ export const Keyboard = () => {
               .join(", ")}`
           : "--"}
       </p>
-
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         {keyboardLayouts.map((keys, index) => (
           <div

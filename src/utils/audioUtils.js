@@ -43,7 +43,7 @@ export class AudioManager {
   playNote(eventKey) {
     if (!this.gainNodes[eventKey]) return;
     this.gainNodes[eventKey].gain.setValueAtTime(
-      0.1,
+      1,
       this.audioContext.currentTime
     );
   }

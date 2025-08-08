@@ -16,6 +16,7 @@ const Key = ({ rightUpCornerTag, isActive, children }) => {
         justifyContent: "center",
         alignItems: "center",
         position: "relative",
+        transition: "all 0.2s ease",
       }}
     >
       <span
