@@ -1,6 +1,10 @@
 import React from "react";
 
-const NoteButton = ({ note, isHighlighted, onClick, onContextMenu }) => {
+const NoteButton = ({ fullNoteName, isHighlighted, onClick }: {
+  fullNoteName: string,
+  isHighlighted: boolean,
+  onClick: () => void,
+}) => {
   return (
     <button
       style={{
@@ -14,12 +18,8 @@ const NoteButton = ({ note, isHighlighted, onClick, onContextMenu }) => {
         transition: "all 0.2s ease",
       }}
       onClick={onClick}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        onContextMenu && onContextMenu();
-      }}
     >
-      {note}
+      {fullNoteName}
     </button>
   );
 };

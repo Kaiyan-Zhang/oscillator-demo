@@ -52,12 +52,11 @@ export const getFrequency = (totalSemitones: number): number => {
   return MIDDLE_C_FREQUENCY * Math.pow(2, totalSemitones / 12);
 };
 
-export const getSemitone = (
-  key: EventKey,
+export const getSemitoneByEventKey = (
+  eventKey: EventKey,
   semitoneShift: number = 0
 ): number => {
-  const baseSemitone = eventKeyToSemitone[key];
-  // 不再需要检查 undefined，因为 EventKey 类型保证了 key 的有效性
+  const baseSemitone = eventKeyToSemitone[eventKey];
   return baseSemitone + semitoneShift;
 };
 
@@ -66,7 +65,13 @@ export const getFullNoteName = (
   semitoneShift: number = 0
 ): string => {
   // 不再需要检查 key 的有效性
-  const totalSemitone = getSemitone(key, semitoneShift);
+  const totalSemitone = getSemitoneByEventKey(key, semitoneShift);
+  const octave = 4 + Math.floor(totalSemitone / 12);
+  const noteIndex = totalSemitone % 12;
+  return `${noteNames[noteIndex]}${octave}`;
+};
+
+export const getFullNoteNameV2 = (totalSemitone: number): string => {
   const octave = 4 + Math.floor(totalSemitone / 12);
   const noteIndex = totalSemitone % 12;
   return `${noteNames[noteIndex]}${octave}`;

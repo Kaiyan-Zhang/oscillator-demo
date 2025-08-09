@@ -7,7 +7,7 @@ interface ActiveNotesDisplayProps {
   semitoneShift: number;
 }
 
-export const ActiveNotesDisplay = ({ activeEventKey, semitoneShift }: ActiveNotesDisplayProps) => {
+export const ShowFullNoteName = ({ activeEventKey, semitoneShift }: ActiveNotesDisplayProps) => {
   return (
     <p
       style={{

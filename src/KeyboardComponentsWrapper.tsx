@@ -1,23 +1,49 @@
-import React from "react";
-import { SemitoneShiftChangerGraph } from "./SemitoneShiftChangerGraph";
-import { ActiveNotesDisplay } from "./ActiveNotesDisplay";
+import React, { useEffect, useState } from "react";
+import { ShowFullNoteName } from "./ShowFullNoteName";
 import { KeyboardLayout } from "./KeyboardLayout";
+import { EventKey, isNoteKey } from "./utils/musicUtils";
 import { AudioManager } from "./utils/audioUtils";
-import { EventKey } from "./utils/musicUtils";
 
 export const KeyboardComponentsWrapper = ({
   semitoneShift,
-  activeEventKey,
-  audioManager,
+  audioManagerRef,
+  recordNote,
 }: {
   semitoneShift: number;
-  activeEventKey: Set<EventKey>;
-  audioManager: React.RefObject<AudioManager | null>;
+  audioManagerRef: React.RefObject<AudioManager | null>;
+  recordNote: (eventKey: EventKey) => void;
 }) => {
+  const [activeEventKey, setActiveEventKey] = useState<Set<EventKey>>(new Set());
+  useEffect(() => {
+    const handleNoteKeyDown = ({ key: eventKey, repeat }: KeyboardEvent): void => {
+      if (!repeat && isNoteKey(eventKey)) {
+        audioManagerRef.current?.playNote(eventKey);
+        setActiveEventKey((prev) => new Set(prev).add(eventKey));
+        recordNote(eventKey);
+      }
+    };
+
+    const handleNoteKeyUp = ({ key: eventKey }: KeyboardEvent): void => {
+      if (isNoteKey(eventKey)) {
+        audioManagerRef.current?.stopNote(eventKey);
+        setActiveEventKey((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(eventKey);
+          return newSet;
+        });
+      }
+    };
+    document.addEventListener("keydown", handleNoteKeyDown);
+    document.addEventListener("keyup", handleNoteKeyUp);
+
+    return () => {
+      document.removeEventListener("keydown", handleNoteKeyDown);
+      document.removeEventListener("keyup", handleNoteKeyUp);
+    };
+  }, [recordNote, semitoneShift]);
   return (
     <>
-      <SemitoneShiftChangerGraph semitoneShift={semitoneShift} />
-      <ActiveNotesDisplay
+      <ShowFullNoteName
         activeEventKey={activeEventKey}
         semitoneShift={semitoneShift}
       />

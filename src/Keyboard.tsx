@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";  // 添加 React 导入
+import React, { useState, useEffect, useRef, useCallback } from "react"; // 添加 React 导入
 import NoteButton from "./NoteButton";
 import {
   keyboardLayouts,
@@ -6,34 +6,30 @@ import {
   isNoteKey,
   isAlpha,
   MIDDLE_C_FREQUENCY,
-  getSemitone,
+  getSemitoneByEventKey,
   EventKey,
+  getFullNoteNameV2,
 } from "./utils/musicUtils";
-import { useAudioManager, AudioManager } from "./useAudioManager";
-import useSemitoneShift, { SemitoneShiftHookResult } from "./useSemitoneShift";
+import { useAudioManager } from "./useAudioManager";
+import { useSemitoneShift } from "./useSemitoneShift";
 import { useAudioContext } from "./AudioContextWrapper";
 import { KeyboardComponentsWrapper } from "./KeyboardComponentsWrapper";
 import { GLOBAL_GAIN } from "./utils/audioUtils";
 
-interface SemitoneShiftHookResult {
-  semitoneShift: number;
-  // 假设useSemitoneShift返回的其他属性
-}
-
 export const Keyboard = () => {
-  const [activeEventKey, setActiveEventKey] = useState<Set<EventKey>>(new Set());
-  const { semitoneShift } = useSemitoneShift() as SemitoneShiftHookResult;
-  
+  const { semitoneShift, semitoneShiftChangerGraph } = useSemitoneShift();
+
   const audioManagerRef = useAudioManager(semitoneShift);
   const audioContext = useAudioContext();
-  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [semitoneStack, setSemitoneStack] = useState<number[]>([]);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const playTimeoutRef = useRef<number | null>(null);
   const [currentPlayingIndex, setCurrentPlayingIndex] = useState<number>(-1);
 
   const playRecording = (startIndex: number = 0): void => {
-    if (!audioContext || semitoneStack.length === 0 || isRecording || isPlaying) return;
+    if (!audioContext || semitoneStack.length === 0 || isRecording || isPlaying)
+      return;
 
     setIsPlaying(true);
     setCurrentPlayingIndex(startIndex);
@@ -90,62 +86,59 @@ export const Keyboard = () => {
   }, []);
 
   useEffect(() => {
-    const handleNoteKeyDown = ({ key: eventKey, repeat }: KeyboardEvent): void => {
-      if (!repeat && isNoteKey(eventKey)) {
-        // eventKey 在这里已经被推断为 EventKey 类型
-        audioManagerRef.current?.playNote(eventKey);
-        setActiveEventKey((prev) => new Set(prev).add(eventKey));
-    
-        if (isRecording) {
-          const semitone = getSemitone(eventKey, semitoneShift);
-          setSemitoneStack((prev) => [...prev, semitone]);
-          setRecordedNotes((prev) => [
-            ...prev,
-            getFullNoteName(eventKey, semitoneShift) as string,
-          ]);
-        }
-      }
-    };
-
-    const handleNoteKeyUp = ({ key: eventKey }: KeyboardEvent): void => {
-      if (isNoteKey(eventKey)) {
-        audioManagerRef.current?.stopNote(eventKey);
-        setActiveEventKey((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(eventKey);
-          return newSet;
-        });
-      }
-    };
-
-    const handleSpecialKeys = ({ key: eventKey, repeat }: KeyboardEvent): void => {
+    const handleSpace = ({ key: eventKey, repeat }: KeyboardEvent): void => {
       if (repeat) return;
-
-      if (eventKey === "Enter") {
-        setIsRecording((prev) => !prev);
-      }
-
-      if (eventKey === "Backspace" && isRecording && semitoneStack.length > 0) {
-        setSemitoneStack((prev) => prev.slice(0, -1));
-        setRecordedNotes((prev) => prev.slice(0, -1));
-      }
-
       if (eventKey === " ") {
         playRecording();
       }
     };
-
-    document.addEventListener("keydown", handleNoteKeyDown);
-    document.addEventListener("keyup", handleNoteKeyUp);
-    document.addEventListener("keydown", handleSpecialKeys);
-
+    document.addEventListener("keydown", handleSpace);
     return () => {
-      document.removeEventListener("keydown", handleNoteKeyDown);
-      document.removeEventListener("keyup", handleNoteKeyUp);
-      document.removeEventListener("keydown", handleSpecialKeys);
+      document.removeEventListener("keydown", handleSpace);
     };
-  }, [isRecording, semitoneStack.length, semitoneShift, isPlaying]);
+  }, [playRecording]);
 
+  useEffect(() => {
+    const handleEnter = ({ key: eventKey, repeat }: KeyboardEvent): void => {
+      if (repeat) return;
+      if (eventKey === "Enter") {
+        setIsRecording((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleEnter);
+    return () => {
+      document.removeEventListener("keydown", handleEnter);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleBackspace = ({
+      key: eventKey,
+      repeat,
+    }: KeyboardEvent): void => {
+      if (repeat) return;
+      if (eventKey === "Backspace") {
+        setSemitoneStack((prev) => {
+          if (prev.length === 0) return prev;
+          return prev.slice(0, -1);
+        });
+      }
+    };
+    document.addEventListener("keydown", handleBackspace);
+    return () => {
+      document.removeEventListener("keydown", handleBackspace);
+    };
+  }, []);
+
+  const recordNote = useCallback(
+    (eventKey: EventKey) => {
+      if (isRecording) {
+        const semitone = getSemitoneByEventKey(eventKey, semitoneShift);
+        setSemitoneStack((prev) => [...prev, semitone]);
+      }
+    },
+    [isRecording, semitoneShift]
+  );
   return (
     <div
       style={{
@@ -156,31 +149,7 @@ export const Keyboard = () => {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <h2>音乐键盘</h2>
-      {/* 录音和播放状态显示 */}
-      <div
-        style={{
-          padding: "8px 16px",
-          borderRadius: "4px",
-          marginBottom: "10px",
-          backgroundColor: isRecording
-            ? "#ffcccc"
-            : isPlaying
-              ? "#ffffcc"
-              : "#ccffcc",
-          fontWeight: "bold",
-        }}
-      >
-        {isRecording
-          ? "录音中... 再次按Enter结束录音"
-          : isPlaying
-            ? "播放中... 每个音符播放0.2秒"
-            : semitoneStack.length > 0
-              ? "按Enter继续录音 / 按空格键播放录音"
-              : "准备录音 - 按Enter开始 / 按空格键播放录音"}
-      </div>
-      {/* 录音内容显示 */}
-      {(isRecording || semitoneStack.length > 0) && (
+      {
         <div style={{ marginBottom: "15px", textAlign: "center" }}>
           <p style={{ fontWeight: "bold" }}>已录音符:</p>
           <div
@@ -190,60 +159,33 @@ export const Keyboard = () => {
               justifyContent: "center",
             }}
           >
-            {recordedNotes.map((note, index) => (
-              <NoteButton
-                key={index}
-                note={note}
-                isHighlighted={isPlaying && currentPlayingIndex === index}
-                onClick={() => {
-                  if (!audioContext) return;
-                  const semitone = semitoneStack[index];
-                  const frequency = MIDDLE_C_FREQUENCY * Math.pow(2, semitone / 12);
-
-                  const oscillator = audioContext.createOscillator();
-                  const gainNode = audioContext.createGain();
-
-                  oscillator.type = "sine";
-                  oscillator.frequency.setValueAtTime(
-                    frequency,
-                    audioContext.currentTime
-                  );
-                  oscillator.connect(gainNode);
-                  gainNode.connect(audioContext.destination);
-                  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                  gainNode.gain.exponentialRampToValueAtTime(
-                    0.01,
-                    audioContext.currentTime + 0.5
-                  );
-
-                  oscillator.start();
-                  oscillator.stop(audioContext.currentTime + 0.5);
-                }}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  playRecording(index);
-                }}
-              />
-            ))}
+            {semitoneStack
+              .map((semitone) => {
+                const note = getFullNoteNameV2(semitone);
+                return note;
+              })
+              .map((fullNoteName, index) => (
+                <NoteButton
+                  key={index}
+                  fullNoteName={fullNoteName}
+                  isHighlighted={isPlaying && currentPlayingIndex === index}
+                  onClick={() => {
+                    playRecording(index);
+                  }}
+                />
+              ))}
           </div>
-          {recordedNotes.length === 0 && <p>暂无</p>}
-          {isRecording && (
-            <p style={{ marginTop: "5px", fontSize: "12px", color: "#666" }}>
-              按Backspace删除最后一个音符
-            </p>
-          )}
-          {!isRecording && semitoneStack.length > 0 && !isPlaying && (
-            <p style={{ marginTop: "5px", fontSize: "12px", color: "#666" }}>
-              按空格键播放录音（每次播放都从头开始） | 按Enter继续录音
-            </p>
-          )}
         </div>
-      )}
+      }
       {!isPlaying && (
-        <KeyboardComponentsWrapper
-          semitoneShift={semitoneShift}
-          activeEventKey={activeEventKey}
-        />
+        <>
+          {semitoneShiftChangerGraph}
+          <KeyboardComponentsWrapper
+            semitoneShift={semitoneShift}
+            audioManagerRef={audioManagerRef}
+            recordNote={recordNote}
+          />
+        </>
       )}
     </div>
   );
