@@ -1,13 +1,17 @@
-import { getFrequency } from "./musicUtils";
-import { eventKeyToSemitone } from "./musicUtils";
+import { eventKeyToSemitone, getFrequency } from "./musicUtils";
 
-export const GLOBAL_GAIN = 0.1;
+export const GLOBAL_GAIN: number = 0.1;
 
 export class AudioManager {
-  constructor(audioContext) {
+  private audioContext: AudioContext;
+  private oscillators: Record<string, OscillatorNode>;
+  private gainNodes: Record<string, GainNode>;
+
+  constructor(audioContext: AudioContext) {
     this.audioContext = audioContext;
     this.oscillators = {};
     this.gainNodes = {};
+
     Object.keys(eventKeyToSemitone).forEach((eventKey) => {
       const semitone = eventKeyToSemitone[eventKey];
       const frequency = getFrequency(semitone, 0);
@@ -31,7 +35,7 @@ export class AudioManager {
     });
   }
 
-  updateSemitoneShift(semitoneShift) {
+  updateSemitoneShift(semitoneShift: number): void {
     Object.keys(this.oscillators).forEach((eventKey) => {
       const semitone = eventKeyToSemitone[eventKey];
       const frequency = getFrequency(semitone, semitoneShift);
@@ -42,7 +46,7 @@ export class AudioManager {
     });
   }
 
-  playNote(eventKey) {
+  playNote(eventKey: string): void {
     if (!this.gainNodes[eventKey]) return;
     this.gainNodes[eventKey].gain.setValueAtTime(
       GLOBAL_GAIN,
@@ -50,7 +54,7 @@ export class AudioManager {
     );
   }
 
-  stopNote(eventKey) {
+  stopNote(eventKey: string): void {
     if (!this.gainNodes[eventKey]) return;
     this.gainNodes[eventKey].gain.setValueAtTime(
       0,
@@ -58,7 +62,7 @@ export class AudioManager {
     );
   }
 
-  cleanup() {
+  cleanup(): void {
     Object.keys(this.oscillators).forEach((eventKey) => {
       this.oscillators[eventKey]?.stop();
     });

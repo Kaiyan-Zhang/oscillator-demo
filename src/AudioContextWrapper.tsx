@@ -1,29 +1,37 @@
-import React, {
+import React, {  // 添加 React 导入
   useState,
   useEffect,
   useRef,
   createContext,
   useContext,
+  ReactNode,
 } from "react";
 
-const AudioContext = createContext(null);
+interface AudioContextType {
+  current: AudioContext | null;
+}
 
-const AudioContextActiveContext = createContext(false);
+const AudioContext = createContext<AudioContext | null>(null);
+const AudioContextActiveContext = createContext<boolean>(false);
 
-export const AudioContextWrapper = ({ children }) => {
-  const [isActive, setIsActive] = useState(false);
-  const audioContext = useRef(null);
+interface AudioContextWrapperProps {
+  children: ReactNode;
+}
+
+export const AudioContextWrapper = ({ children }: AudioContextWrapperProps) => {
+  const [isActive, setIsActive] = useState<boolean>(false);
+  const audioContext = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     audioContext.current = new (window.AudioContext ||
       window.webkitAudioContext)();
 
-    const activateAudioContext = (event) => {
+    const activateAudioContext = (event: KeyboardEvent) => {
       if (event.type === "keydown" && event.key !== "Enter") {
         return;
       }
 
-      if (audioContext.current.state === "suspended") {
+      if (audioContext.current?.state === "suspended") {
         audioContext.current.resume().then(() => {
           setIsActive(true);
         });
@@ -56,7 +64,7 @@ export const AudioContextWrapper = ({ children }) => {
   );
 };
 
-export const useAudioContext = () => {
+export const useAudioContext = (): AudioContext | null => {
   const context = useContext(AudioContext);
   return context;
 };

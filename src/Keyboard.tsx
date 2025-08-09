@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import NoteButton from "./NoteButton"; // 导入新组件
+import React, { useState, useEffect, useRef } from "react";  // 添加 React 导入
+import NoteButton from "./NoteButton";
 import {
   keyboardLayouts,
   getFullNoteName,
   isNoteKey,
   isAlpha,
-  eventKeyToSemitone,
-  noteNames,
   MIDDLE_C_FREQUENCY,
   getSemitone,
 } from "./utils/musicUtils";
@@ -16,34 +14,32 @@ import { useAudioContext } from "./AudioContextWrapper";
 import { KeyboardComponentsWrapper } from "./KeyboardComponentsWrapper";
 import { GLOBAL_GAIN } from "./utils/audioUtils";
 
+interface SemitoneShiftHookResult {
+  semitoneShift: number;
+  // 假设useSemitoneShift返回的其他属性
+}
+
 export const Keyboard = () => {
-  const [activeEventKey, setActiveEventKey] = useState(new Set());
-  const { semitoneShift } = useSemitoneShift();
+  const [activeEventKey, setActiveEventKey] = useState<Set<string>>(new Set());
+  const { semitoneShift } = useSemitoneShift() as SemitoneShiftHookResult;
   const audioManagerRef = useAudioManager(semitoneShift);
   const audioContext = useAudioContext();
-  // 录音状态和半音栈
-  const [isRecording, setIsRecording] = useState(false);
-  const [semitoneStack, setSemitoneStack] = useState([]);
-  const [recordedNotes, setRecordedNotes] = useState([]);
-  // 播放状态
-  const [isPlaying, setIsPlaying] = useState(false);
-  const playTimeoutRef = useRef(null);
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [semitoneStack, setSemitoneStack] = useState<number[]>([]);
+  const [recordedNotes, setRecordedNotes] = useState<string[]>([]);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const playTimeoutRef = useRef<number | null>(null);
+  const [currentPlayingIndex, setCurrentPlayingIndex] = useState<number>(-1);
 
-  // 播放录音函数
-  // 添加当前播放索引的状态
-  const [currentPlayingIndex, setCurrentPlayingIndex] = useState(-1);
-
-  // 修改播放录音函数
-  const playRecording = (startIndex = 0) => {
-    if (semitoneStack.length === 0 || isRecording || isPlaying) return;
+  const playRecording = (startIndex: number = 0): void => {
+    if (!audioContext || semitoneStack.length === 0 || isRecording || isPlaying) return;
 
     setIsPlaying(true);
-    setCurrentPlayingIndex(startIndex); // 设置开始播放的索引
+    setCurrentPlayingIndex(startIndex);
     let currentTime = audioContext.currentTime;
-    const noteDuration = 0.2; // 每个音符播放0.2秒
+    const noteDuration = 0.2;
 
     semitoneStack.slice(startIndex).forEach((semitone, index) => {
-      // 设置当前播放索引的定时器
       setTimeout(
         () => {
           setCurrentPlayingIndex(startIndex + index);
@@ -51,10 +47,7 @@ export const Keyboard = () => {
         index * noteDuration * 1000
       );
 
-      // 计算频率
       const frequency = MIDDLE_C_FREQUENCY * Math.pow(2, semitone / 12);
-
-      // 创建振荡器和增益节点
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
@@ -78,17 +71,15 @@ export const Keyboard = () => {
       oscillator.stop(currentTime + (index + 1) * noteDuration);
     });
 
-    // 设置播放结束的定时器
     playTimeoutRef.current = setTimeout(
       () => {
         setIsPlaying(false);
         setCurrentPlayingIndex(-1);
       },
       semitoneStack.slice(startIndex).length * noteDuration * 1000
-    );
+    ) as unknown as number;
   };
 
-  // 清除播放定时器
   useEffect(() => {
     return () => {
       if (playTimeoutRef.current) {
@@ -98,24 +89,23 @@ export const Keyboard = () => {
   }, []);
 
   useEffect(() => {
-    const handleNoteKeyDown = ({ key: eventKey, repeat }) => {
+    const handleNoteKeyDown = ({ key: eventKey, repeat }: KeyboardEvent): void => {
       if (!repeat && isNoteKey(eventKey)) {
         audioManagerRef.current?.playNote(eventKey);
         setActiveEventKey((prev) => new Set(prev).add(eventKey));
 
-        // 录音时将真正的半音值压栈
         if (isRecording) {
           const semitone = getSemitone(eventKey, semitoneShift);
           setSemitoneStack((prev) => [...prev, semitone]);
           setRecordedNotes((prev) => [
             ...prev,
-            getFullNoteName(eventKey, semitoneShift),
+            getFullNoteName(eventKey, semitoneShift) as string,
           ]);
         }
       }
     };
 
-    const handleNoteKeyUp = ({ key: eventKey }) => {
+    const handleNoteKeyUp = ({ key: eventKey }: KeyboardEvent): void => {
       if (isNoteKey(eventKey)) {
         audioManagerRef.current?.stopNote(eventKey);
         setActiveEventKey((prev) => {
@@ -126,22 +116,18 @@ export const Keyboard = () => {
       }
     };
 
-    // 处理回车键、backspace键和空格键
-    const handleSpecialKeys = ({ key: eventKey, repeat }) => {
+    const handleSpecialKeys = ({ key: eventKey, repeat }: KeyboardEvent): void => {
       if (repeat) return;
 
-      // 回车键控制录音 - 移除了清空栈的代码
       if (eventKey === "Enter") {
         setIsRecording((prev) => !prev);
       }
 
-      // Backspace键出栈
       if (eventKey === "Backspace" && isRecording && semitoneStack.length > 0) {
         setSemitoneStack((prev) => prev.slice(0, -1));
         setRecordedNotes((prev) => prev.slice(0, -1));
       }
 
-      // 空格键播放录音
       if (eventKey === " ") {
         playRecording();
       }
@@ -208,10 +194,9 @@ export const Keyboard = () => {
                 note={note}
                 isHighlighted={isPlaying && currentPlayingIndex === index}
                 onClick={() => {
-                  // 点击播放单个音符
+                  if (!audioContext) return;
                   const semitone = semitoneStack[index];
-                  const frequency =
-                    MIDDLE_C_FREQUENCY * Math.pow(2, semitone / 12);
+                  const frequency = MIDDLE_C_FREQUENCY * Math.pow(2, semitone / 12);
 
                   const oscillator = audioContext.createOscillator();
                   const gainNode = audioContext.createGain();
@@ -232,8 +217,8 @@ export const Keyboard = () => {
                   oscillator.start();
                   oscillator.stop(audioContext.currentTime + 0.5);
                 }}
-                onContextMenu={() => {
-                  // 右键从当前音符开始播放
+                onContextMenu={(e) => {
+                  e.preventDefault();
                   playRecording(index);
                 }}
               />

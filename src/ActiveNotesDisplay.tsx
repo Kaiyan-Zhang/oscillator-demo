@@ -1,7 +1,12 @@
 import React from "react";
 import { getFullNoteName } from "./utils/musicUtils";
 
-export const ActiveNotesDisplay = ({ activeEventKey, semitoneShift }) => {
+interface ActiveNotesDisplayProps {
+  activeEventKey: Set<string>;
+  semitoneShift: number;
+}
+
+export const ActiveNotesDisplay = ({ activeEventKey, semitoneShift }: ActiveNotesDisplayProps) => {
   return (
     <p
       style={{
@@ -13,7 +18,7 @@ export const ActiveNotesDisplay = ({ activeEventKey, semitoneShift }) => {
     >
       {Array.from(activeEventKey).length > 0
         ? `${Array.from(activeEventKey)
-            .map((eventKey) => getFullNoteName(eventKey, semitoneShift))
+            .map((eventKey) => getFullNoteName(eventKey, semitoneShift) as string)
             .join(", ")}`
         : "--"}
     </p>

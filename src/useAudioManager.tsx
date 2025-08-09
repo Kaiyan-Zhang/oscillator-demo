@@ -2,18 +2,15 @@ import { useRef, useEffect } from "react";
 import { useAudioContext } from "./AudioContextWrapper";
 import { AudioManager } from "./utils/audioUtils";
 
-export const useAudioManager = (semitoneShift) => {
+export const useAudioManager = (semitoneShift: number) => {
   const audioContext = useAudioContext();
-  // const audioManagerRef = useRef(new AudioManager(audioContext)); // 实测这样写会有问题，但是不知道为什么
+  const audioManagerRef = useRef<AudioManager | null>(null);
 
-  /* 必须像下面这样写 >>>>>>>>>> */
-  const audioManagerRef = useRef(null);
   useEffect(() => {
     if (audioContext) {
       audioManagerRef.current = new AudioManager(audioContext);
     }
   }, [audioContext]);
-  /* 必须像上面这样写 <<<<<<<<<< */
 
   useEffect(() => {
     return () => {
