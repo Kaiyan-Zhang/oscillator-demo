@@ -1,17 +1,11 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
+import { useWhenKeyDown } from "./utils/useWhenKeyDown";
 
-export function useEnter(setIsRecording: React.Dispatch<React.SetStateAction<boolean>>) {
-  useEffect(() => {
-    const handleEnter = ({ key: eventKey, repeat }: KeyboardEvent): void => {
-      if (repeat) return;
-      if (eventKey === "Enter") {
-        setIsRecording((prev) => !prev);
-      }
-    };
-
-    document.addEventListener("keydown", handleEnter);
-    return () => {
-      document.removeEventListener("keydown", handleEnter);
-    };
+export function useEnter(
+  setIsRecording: React.Dispatch<React.SetStateAction<boolean>>
+) {
+  const onEnter = useCallback(() => {
+    setIsRecording((prev) => !prev);
   }, [setIsRecording]);
+  useWhenKeyDown("Enter", onEnter);
 }

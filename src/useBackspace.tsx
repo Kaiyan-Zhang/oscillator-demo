@@ -1,20 +1,14 @@
-import { useEffect } from "react";
+import { useCallback } from "react";
+import { useWhenKeyDown } from "./utils/useWhenKeyDown";
 
 export function useBackspace(setSemitoneStack: React.Dispatch<React.SetStateAction<number[]>>) {
-  useEffect(() => {
-    const handleBackspace = ({ key: eventKey, repeat }: KeyboardEvent): void => {
-      if (repeat) return;
-      if (eventKey === "Backspace") {
-        setSemitoneStack((prev) => {
-          if (prev.length === 0) return prev;
-          return prev.slice(0, -1);
-        });
-      }
-    };
-
-    document.addEventListener("keydown", handleBackspace);
-    return () => {
-      document.removeEventListener("keydown", handleBackspace);
-    };
+  const onBackspace = useCallback(() => {
+    setSemitoneStack((prev) => {
+      if (prev.length === 0) return prev;
+      const newStack = [...prev];
+      newStack.pop();
+      return newStack;
+    });
   }, [setSemitoneStack]);
+  useWhenKeyDown("Backspace", onBackspace);
 }
