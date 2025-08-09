@@ -1,12 +1,12 @@
 import React from "react";
-import { Keyboard } from "./Keyboard";
+import { Main } from "./main";
 import { AudioContextWrapper } from "./AudioContextWrapper";
 
 export const App = () => {
   return (
     <div className="app">
       <AudioContextWrapper>
-        <Keyboard />
+        <Main />
       </AudioContextWrapper>
     </div>
   );

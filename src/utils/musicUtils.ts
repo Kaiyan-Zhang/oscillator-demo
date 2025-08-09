@@ -113,3 +113,8 @@ export const playNoteAsync = async (
     }, duration * 1000);
   });
 };
+
+// 发出一声节拍音符，默认时长0.2秒
+export const playATiktok = async (audioContext: AudioContext) => {
+  await playNoteAsync(audioContext, 0, 0.2);
+};

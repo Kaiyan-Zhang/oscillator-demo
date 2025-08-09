@@ -4,8 +4,9 @@ import { useSemitoneShift } from "./useSemitoneShift";
 import { RecordedNotes } from "./RecordedNotes";
 import { useActiveEventKey } from "./useActiveEventKey";
 import { KeyboardLayout } from "./KeyboardLayout";
+import { TiktokSetter } from "./TiktokSetter";
 
-export const Keyboard = () => {
+export const Main = () => {
   const semitoneShift = useSemitoneShift();
 
   const [isRecording, setIsRecording] = useState(false);
@@ -25,6 +26,7 @@ export const Keyboard = () => {
   });
   return (
     <div>
+      <TiktokSetter />
       <div>Semitone Shift: {semitoneShift}</div>
       {isRecording && <div>Recording</div>}
       <RecordedNotes
