@@ -92,7 +92,7 @@ export const isNoteKey = (key: string): key is EventKey => {
 export const playNoteAsync = async (
   audioContext: AudioContext,
   semitone: number,
-  duration: number
+  duration: number // 单位是s
 ) => {
   return new Promise((resolve) => {
     const frequency = getFrequency(semitone);

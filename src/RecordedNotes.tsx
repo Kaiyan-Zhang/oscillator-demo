@@ -5,6 +5,7 @@ import { useAudioContext } from "./AudioContextWrapper";
 import { useBackspace } from "./useBackspace";
 import { useEnter } from "./useEnter";
 import { useWhenKeyDown } from "./utils/useWhenKeyDown";
+import { Beemer } from "./Beemer";
 
 export const RecordedNotes = ({
   semitoneStack,
@@ -37,37 +38,45 @@ export const RecordedNotes = ({
     setIsPlaying(false);
     setCurrentPlayingIndex(-1);
   };
-  
-  const handlePlay = useCallback((startIndex: number) => {
-    if (isPlaying) return;
-    setIsPlaying(true);
-    playRecording(startIndex);
-  }, [isPlaying, playRecording]);
+
+  const handlePlay = useCallback(
+    (startIndex: number) => {
+      if (isPlaying) return;
+      setIsPlaying(true);
+      playRecording(startIndex);
+    },
+    [isPlaying, playRecording]
+  );
 
   const onSpace = useCallback(() => {
     handlePlay(playStartIndex);
-  },[handlePlay, playStartIndex])
-  useWhenKeyDown("Space", onSpace);
+  }, [handlePlay, playStartIndex]);
+  useWhenKeyDown(" ", onSpace);
 
   useEnter(setIsRecording);
 
   useBackspace(setSemitoneStack);
 
-  return semitoneStack
-    .map((semitone) => {
-      const note = getFullNoteNameV2(semitone);
-      return note;
-    })
-    .map((fullNoteName, index) => (
-      <RecordedNote
-        key={index}
-        fullNoteName={fullNoteName}
-        isStartIndex={index === playStartIndex}
-        isHighlighted={index === currentPlayingIndex}
-        onClick={() => {
-          setPlayStartIndex(index);
-          handlePlay(index);
-        }}
-      />
-    ));
+  return (
+    <>
+      <Beemer semitoneStack={semitoneStack} />
+      {semitoneStack
+        .map((semitone) => {
+          const note = getFullNoteNameV2(semitone);
+          return note;
+        })
+        .map((fullNoteName, index) => (
+          <RecordedNote
+            key={index}
+            fullNoteName={fullNoteName}
+            isStartIndex={index === playStartIndex}
+            isHighlighted={index === currentPlayingIndex}
+            onClick={() => {
+              setPlayStartIndex(index);
+              handlePlay(index);
+            }}
+          />
+        ))}
+    </>
+  );
 };
