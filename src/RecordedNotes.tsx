@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { getFullNoteNameV2, getFrequency, playNoteAsync } from "./utils/musicUtils";
+import { getFullNoteNameV2, playNoteAsync } from "./utils/musicUtils";
 import RecordedNote from "./RecordedNote";
 import { useAudioContext } from "./AudioContextWrapper";
-import { GLOBAL_GAIN } from "./utils/audioUtils";
 import { useBackspace } from "./useBackspace";
 import { useEnter } from "./useEnter";
 
@@ -16,6 +15,7 @@ export const RecordedNotes = ({
   setIsRecording: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [playStartIndex, setPlayStartIndex] = useState(0);
   const [currentPlayingIndex, setCurrentPlayingIndex] = useState(-1);
   const audioContext = useAudioContext();
   const playTimeoutRef = useRef<number | null>(null);
@@ -47,14 +47,14 @@ export const RecordedNotes = ({
     const handleSpace = ({ key: eventKey, repeat }: KeyboardEvent): void => {
       if (repeat) return;
       if (eventKey === " ") {
-        handlePlay(0);
+        handlePlay(playStartIndex);
       }
     };
     document.addEventListener("keydown", handleSpace);
     return () => {
       document.removeEventListener("keydown", handleSpace);
     };
-  }, [handlePlay]);
+  }, [handlePlay, playStartIndex]);
 
   useEnter(setIsRecording);
 
@@ -69,8 +69,10 @@ export const RecordedNotes = ({
       <RecordedNote
         key={index}
         fullNoteName={fullNoteName}
-        isHighlighted={currentPlayingIndex === index}
+        isStartIndex={index === playStartIndex}
+        isHighlighted={index === currentPlayingIndex}
         onClick={() => {
+          setPlayStartIndex(index);
           handlePlay(index);
         }}
       />

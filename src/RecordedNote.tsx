@@ -1,8 +1,9 @@
 import React from "react";
 
-const RecordedNote = ({ fullNoteName, isHighlighted, onClick }: {
+const RecordedNote = ({ fullNoteName, isHighlighted, isStartIndex, onClick }: {
   fullNoteName: string,
   isHighlighted: boolean,
+  isStartIndex: boolean,
   onClick: () => void,
 }) => {
   return (
@@ -11,8 +12,10 @@ const RecordedNote = ({ fullNoteName, isHighlighted, onClick }: {
         padding: "8px 12px",
         margin: "4px",
         borderRadius: "4px",
-        backgroundColor: isHighlighted ? "#ffcc00" : "#f0f0f0",
-        border: isHighlighted ? "1px solid #ff9900" : "1px solid #ccc",
+        backgroundColor: isHighlighted ? "#ffcc00" : isStartIndex ? "#ff6600" : "#f0f0f0",
+        borderColor: isHighlighted ? "#ff9900" : isStartIndex ? "#ff6600" : "#ccc",
+        borderWidth: "1px",
+        borderStyle: "solid",
         cursor: "pointer",
         transition: "all 0.2s ease",
       }}
