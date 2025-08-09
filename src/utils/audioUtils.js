@@ -1,6 +1,8 @@
 import { getFrequency } from "./musicUtils";
 import { eventKeyToSemitone } from "./musicUtils.js";
 
+export const GLOBAL_GAIN = 0.1;
+
 export class AudioManager {
   constructor(audioContext) {
     this.audioContext = audioContext;
@@ -43,7 +45,7 @@ export class AudioManager {
   playNote(eventKey) {
     if (!this.gainNodes[eventKey]) return;
     this.gainNodes[eventKey].gain.setValueAtTime(
-      1,
+      GLOBAL_GAIN,
       this.audioContext.currentTime
     );
   }

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import Key from "./Key.jsx";
 import NoteButton from "./NoteButton.jsx"; // 导入新组件
 import {
   keyboardLayouts,
@@ -9,12 +8,13 @@ import {
   eventKeyToSemitone,
   noteNames,
   MIDDLE_C_FREQUENCY,
+  getSemitone,
 } from "./utils/musicUtils";
 import { useAudioManager } from "./useAudioManager.jsx";
 import useSemitoneShift from "./useSemitoneShift.jsx";
-import { SemitoneShiftChangerGraph } from "./SemitoneShiftChangerGraph.jsx";
 import { useAudioContext } from "./AudioContextWrapper.jsx";
-import KeyboardLayout from "./KeyboardLayout.jsx";
+import { KeyboardComponentsWrapper } from "./KeyboardComponentsWrapper.jsx";
+import { GLOBAL_GAIN } from "./utils/audioUtils.js";
 
 export const Keyboard = () => {
   const [activeEventKey, setActiveEventKey] = useState(new Set());
@@ -65,7 +65,10 @@ export const Keyboard = () => {
       );
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      gainNode.gain.setValueAtTime(1, currentTime + index * noteDuration);
+      gainNode.gain.setValueAtTime(
+        GLOBAL_GAIN,
+        currentTime + index * noteDuration
+      );
       gainNode.gain.exponentialRampToValueAtTime(
         0.01,
         currentTime + (index + 1) * noteDuration
@@ -102,9 +105,8 @@ export const Keyboard = () => {
 
         // 录音时将真正的半音值压栈
         if (isRecording) {
-          const baseSemitone = eventKeyToSemitone[eventKey];
-          const actualSemitone = baseSemitone + semitoneShift;
-          setSemitoneStack((prev) => [...prev, actualSemitone]);
+          const semitone = getSemitone(eventKey, semitoneShift);
+          setSemitoneStack((prev) => [...prev, semitone]);
           setRecordedNotes((prev) => [
             ...prev,
             getFullNoteName(eventKey, semitoneShift),
@@ -167,7 +169,6 @@ export const Keyboard = () => {
       }}
     >
       <h2>音乐键盘</h2>
-      <p style={{ marginBottom: "15px" }}>当前半音偏移: {semitoneShift}</p>
       {/* 录音和播放状态显示 */}
       <div
         style={{
@@ -191,7 +192,6 @@ export const Keyboard = () => {
               : "准备录音 - 按Enter开始 / 按空格键播放录音"}
       </div>
       {/* 录音内容显示 */}
-      // 修改录音内容显示部分
       {(isRecording || semitoneStack.length > 0) && (
         <div style={{ marginBottom: "15px", textAlign: "center" }}>
           <p style={{ fontWeight: "bold" }}>已录音符:</p>
@@ -252,24 +252,12 @@ export const Keyboard = () => {
           )}
         </div>
       )}
-      <SemitoneShiftChangerGraph />
-      <p
-        style={{
-          marginTop: "5px",
-          marginBottom: "15px",
-          fontWeight: "bold",
-          color: "#4CAF50",
-        }}
-      >
-        {Array.from(activeEventKey).length > 0
-          ? `${Array.from(activeEventKey)
-              .map((eventKey) => getFullNoteName(eventKey, semitoneShift))
-              .join(", ")}`
-          : "--"}
-      </p>
-      <KeyboardLayout activeEventKey={activeEventKey} />
+      {!isPlaying && (
+        <KeyboardComponentsWrapper
+          semitoneShift={semitoneShift}
+          activeEventKey={activeEventKey}
+        />
+      )}
     </div>
   );
 };
-
-export default Keyboard;

@@ -1,6 +1,6 @@
 import React from "react";
 
-export const SemitoneShiftChangerGraph = () => (
+export const SemitoneShiftChangerGraph = ({ semitoneShift }) => (
   <div
     style={{
       display: "flex",
@@ -10,6 +10,7 @@ export const SemitoneShiftChangerGraph = () => (
       fontFamily: "monospace",
     }}
   >
+    <p style={{ marginBottom: "15px" }}>当前半音偏移: {semitoneShift}</p>
     <div
       style={{
         width: "40px",

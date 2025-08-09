@@ -2,7 +2,7 @@ import React from "react";
 import Key from "./Key.jsx";
 import { keyboardLayouts, isAlpha } from "./utils/musicUtils";
 
-const KeyboardLayout = ({ activeEventKey }) => {
+export const KeyboardLayout = ({ activeEventKey }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
       {keyboardLayouts.map((keys, index) => (
@@ -32,5 +32,3 @@ const KeyboardLayout = ({ activeEventKey }) => {
     </div>
   );
 };
-
-export default KeyboardLayout;

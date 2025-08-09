@@ -50,18 +50,17 @@ export const getFrequency = (semitone, semitoneShift = 0) => {
   return MIDDLE_C_FREQUENCY * Math.pow(2, totalSemitones / 12);
 };
 
-export const getFullNoteName = (
-  key,
-  semitoneShift = 0,
-  keyMap = eventKeyToSemitone,
-  names = noteNames
-) => {
-  if (keyMap[key] === undefined) return null;
-  const baseKeyNoteInt = keyMap[key];
-  const totalKeyNoteInt = baseKeyNoteInt + semitoneShift;
-  const octave = 4 + Math.floor(totalKeyNoteInt / 12);
-  const noteIndex = totalKeyNoteInt % 12;
-  return `${names[noteIndex]}${octave}`;
+export const getSemitone = (key, semitoneShift = 0) => {
+  const baseSemitone = eventKeyToSemitone[key];
+  return baseSemitone + semitoneShift;
+};
+
+export const getFullNoteName = (key, semitoneShift = 0) => {
+  if (!isNoteKey(key)) return null;
+  const totalSemitone = getSemitone(key, semitoneShift);
+  const octave = 4 + Math.floor(totalSemitone / 12);
+  const noteIndex = totalSemitone % 12;
+  return `${noteNames[noteIndex]}${octave}`;
 };
 
 export const isAlpha = (char) => {
@@ -69,7 +68,7 @@ export const isAlpha = (char) => {
   return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
 };
 
-export const isNoteKey = (key, keyMap = eventKeyToSemitone) => {
+export const isNoteKey = (key) => {
   const lowerKey = key.toLowerCase();
-  return lowerKey in keyMap;
+  return lowerKey in eventKeyToSemitone;
 };
