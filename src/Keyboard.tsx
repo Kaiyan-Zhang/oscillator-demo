@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { getSemitoneByEventKey, EventKey } from "./utils/musicUtils";
 import { useSemitoneShift } from "./useSemitoneShift";
-import { KeyboardComponentsWrapper } from "./KeyboardComponentsWrapper";
 import { RecordedNotes } from "./RecordedNotes";
+import { useActiveEventKey } from "./useActiveEventKey";
+import { KeyboardLayout } from "./KeyboardLayout";
 
 export const Keyboard = () => {
   const semitoneShift = useSemitoneShift();
@@ -18,6 +19,10 @@ export const Keyboard = () => {
     },
     [isRecording, semitoneShift]
   );
+  const { activeEventKey, activeFullNoteNames } = useActiveEventKey({
+    semitoneShift,
+    recordNote,
+  });
   return (
     <div>
       <div>Semitone Shift: {semitoneShift}</div>
@@ -27,10 +32,8 @@ export const Keyboard = () => {
         setIsRecording={setIsRecording}
         setSemitoneStack={setSemitoneStack}
       />
-      <KeyboardComponentsWrapper
-        semitoneShift={semitoneShift}
-        recordNote={recordNote}
-      />
+      {activeFullNoteNames}
+      <KeyboardLayout activeEventKey={activeEventKey} />
     </div>
   );
 };

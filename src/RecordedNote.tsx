@@ -1,6 +1,6 @@
 import React from "react";
 
-const NoteButton = ({ fullNoteName, isHighlighted, onClick }: {
+const RecordedNote = ({ fullNoteName, isHighlighted, onClick }: {
   fullNoteName: string,
   isHighlighted: boolean,
   onClick: () => void,
@@ -13,7 +13,6 @@ const NoteButton = ({ fullNoteName, isHighlighted, onClick }: {
         borderRadius: "4px",
         backgroundColor: isHighlighted ? "#ffcc00" : "#f0f0f0",
         border: isHighlighted ? "1px solid #ff9900" : "1px solid #ccc",
-        fontWeight: isHighlighted ? "bold" : "normal",
         cursor: "pointer",
         transition: "all 0.2s ease",
       }}
@@ -24,4 +23,4 @@ const NoteButton = ({ fullNoteName, isHighlighted, onClick }: {
   );
 };
 
-export default NoteButton;
+export default RecordedNote;

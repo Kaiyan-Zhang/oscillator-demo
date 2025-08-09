@@ -1,3 +1,5 @@
+import { GLOBAL_GAIN } from "./audioUtils";
+
 // 添加缺失的MIDDLE_C_FREQUENCY常量
 export const MIDDLE_C_FREQUENCY = 261.63 as const;
 
@@ -85,4 +87,29 @@ export const isAlpha = (char: string): boolean => {
 
 export const isNoteKey = (key: string): key is EventKey => {
   return key in eventKeyToSemitone;
+};
+
+export const playNoteAsync = async (
+  audioContext: AudioContext,
+  semitone: number,
+  duration: number
+) => {
+  return new Promise((resolve) => {
+    const frequency = getFrequency(semitone);
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = frequency;
+    gainNode.gain.value = GLOBAL_GAIN;
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start();
+    setTimeout(() => {
+      oscillator.stop();
+      resolve(true);
+    }, duration * 1000);
+  });
 };

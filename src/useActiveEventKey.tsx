@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { ShowFullNoteName } from "./ShowFullNoteName";
-import { KeyboardLayout } from "./KeyboardLayout";
+import { ActiveFullNoteNames } from "./ActiveFullNoteNames";
 import { EventKey, isNoteKey } from "./utils/musicUtils";
 import { useAudioManager } from "./useAudioManager";
 
-export const KeyboardComponentsWrapper = ({
+export const useActiveEventKey = ({
   semitoneShift,
   recordNote,
 }: {
@@ -12,9 +11,14 @@ export const KeyboardComponentsWrapper = ({
   recordNote: (eventKey: EventKey) => void;
 }) => {
   const audioManagerRef = useAudioManager(semitoneShift);
-  const [activeEventKey, setActiveEventKey] = useState<Set<EventKey>>(new Set());
+  const [activeEventKey, setActiveEventKey] = useState<Set<EventKey>>(
+    new Set()
+  );
   useEffect(() => {
-    const handleNoteKeyDown = ({ key: eventKey, repeat }: KeyboardEvent): void => {
+    const handleNoteKeyDown = ({
+      key: eventKey,
+      repeat,
+    }: KeyboardEvent): void => {
       if (!repeat && isNoteKey(eventKey)) {
         audioManagerRef.current?.playNote(eventKey);
         setActiveEventKey((prev) => new Set(prev).add(eventKey));
@@ -40,13 +44,13 @@ export const KeyboardComponentsWrapper = ({
       document.removeEventListener("keyup", handleNoteKeyUp);
     };
   }, [recordNote, semitoneShift]);
-  return (
-    <>
-      <ShowFullNoteName
+  return {
+    activeEventKey,
+    activeFullNoteNames: (
+      <ActiveFullNoteNames
         activeEventKey={activeEventKey}
         semitoneShift={semitoneShift}
       />
-      <KeyboardLayout activeEventKey={activeEventKey} />
-    </>
-  );
+    ),
+  };
 };

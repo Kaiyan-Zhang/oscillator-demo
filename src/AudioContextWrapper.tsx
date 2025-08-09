@@ -63,7 +63,7 @@ export const AudioContextWrapper = ({ children }: AudioContextWrapperProps) => {
   );
 };
 
-export const useAudioContext = (): AudioContext | null => {
+export const useAudioContext = (): AudioContext => {
   const context = useContext(AudioContext);
-  return context;
+  return context as AudioContext;
 };
