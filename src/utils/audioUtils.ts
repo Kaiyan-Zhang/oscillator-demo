@@ -1,6 +1,6 @@
 import { eventKeyToSemitone, getFrequency } from "./musicUtils";
 
-export const GLOBAL_GAIN: number = 0.1;
+export const GLOBAL_GAIN = 0.1;
 
 export class AudioManager {
   private audioContext: AudioContext;
@@ -14,7 +14,7 @@ export class AudioManager {
 
     Object.keys(eventKeyToSemitone).forEach((eventKey) => {
       const semitone = eventKeyToSemitone[eventKey];
-      const frequency = getFrequency(semitone, 0);
+      const frequency = getFrequency(semitone + 0);
 
       const oscillator = this.audioContext.createOscillator();
       const gainNode = this.audioContext.createGain();
@@ -38,7 +38,7 @@ export class AudioManager {
   updateSemitoneShift(semitoneShift: number): void {
     Object.keys(this.oscillators).forEach((eventKey) => {
       const semitone = eventKeyToSemitone[eventKey];
-      const frequency = getFrequency(semitone, semitoneShift);
+      const frequency = getFrequency(semitone + semitoneShift);
       this.oscillators[eventKey].frequency.setValueAtTime(
         frequency,
         this.audioContext.currentTime
