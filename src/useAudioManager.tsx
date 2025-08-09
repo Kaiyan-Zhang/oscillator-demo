@@ -2,7 +2,7 @@ import { useRef, useEffect } from "react";
 import { useAudioContext } from "./AudioContextWrapper";
 import { AudioManager } from "./utils/audioUtils";
 
-export const useAudioManager = (semitoneShift: number) => {
+export function useAudioManager(semitoneShift: number): React.RefObject<AudioManager | null> {
   const audioContext = useAudioContext();
   const audioManagerRef = useRef<AudioManager | null>(null);
 

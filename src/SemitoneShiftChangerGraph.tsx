@@ -1,6 +1,6 @@
 import React from "react";
 
-export const SemitoneShiftChangerGraph = ({ semitoneShift }) => (
+export const SemitoneShiftChangerGraph = ({ semitoneShift }: { semitoneShift: number }) => (
   <div
     style={{
       display: "flex",

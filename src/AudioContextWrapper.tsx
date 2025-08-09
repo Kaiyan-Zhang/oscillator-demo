@@ -23,8 +23,7 @@ export const AudioContextWrapper = ({ children }: AudioContextWrapperProps) => {
   const audioContext = useRef<AudioContext | null>(null);
 
   useEffect(() => {
-    audioContext.current = new (window.AudioContext ||
-      window.webkitAudioContext)();
+    audioContext.current = new window.AudioContext();
 
     const activateAudioContext = (event: KeyboardEvent) => {
       if (event.type === "keydown" && event.key !== "Enter") {

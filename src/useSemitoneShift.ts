@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
-interface SemitoneShiftHookResult {
+// 添加接口定义并导出
+export interface SemitoneShiftHookResult {
   semitoneShift: number;
   increaseSemitone: () => void;
   decreaseSemitone: () => void;

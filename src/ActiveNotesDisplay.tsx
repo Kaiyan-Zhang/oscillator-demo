@@ -1,8 +1,9 @@
 import React from "react";
 import { getFullNoteName } from "./utils/musicUtils";
+import { EventKey } from "./utils/musicUtils";
 
 interface ActiveNotesDisplayProps {
-  activeEventKey: Set<string>;
+  activeEventKey: Set<EventKey>;
   semitoneShift: number;
 }
 

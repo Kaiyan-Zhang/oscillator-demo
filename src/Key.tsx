@@ -1,6 +1,7 @@
 import React from "react";
+import { EventKey } from "./utils/musicUtils";
 
-const Key = ({ rightUpCornerTag, isActive, children }) => {
+const Key = ({ rightUpCornerTag, isActive, children }: { rightUpCornerTag: EventKey; isActive: boolean; children: React.ReactNode }) => {
   return (
     <div
       style={{

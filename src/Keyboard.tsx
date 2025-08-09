@@ -7,9 +7,10 @@ import {
   isAlpha,
   MIDDLE_C_FREQUENCY,
   getSemitone,
+  EventKey,
 } from "./utils/musicUtils";
-import { useAudioManager } from "./useAudioManager";
-import useSemitoneShift from "./useSemitoneShift";
+import { useAudioManager, AudioManager } from "./useAudioManager";
+import useSemitoneShift, { SemitoneShiftHookResult } from "./useSemitoneShift";
 import { useAudioContext } from "./AudioContextWrapper";
 import { KeyboardComponentsWrapper } from "./KeyboardComponentsWrapper";
 import { GLOBAL_GAIN } from "./utils/audioUtils";
@@ -20,13 +21,13 @@ interface SemitoneShiftHookResult {
 }
 
 export const Keyboard = () => {
-  const [activeEventKey, setActiveEventKey] = useState<Set<string>>(new Set());
+  const [activeEventKey, setActiveEventKey] = useState<Set<EventKey>>(new Set());
   const { semitoneShift } = useSemitoneShift() as SemitoneShiftHookResult;
+  
   const audioManagerRef = useAudioManager(semitoneShift);
   const audioContext = useAudioContext();
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [semitoneStack, setSemitoneStack] = useState<number[]>([]);
-  const [recordedNotes, setRecordedNotes] = useState<string[]>([]);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const playTimeoutRef = useRef<number | null>(null);
   const [currentPlayingIndex, setCurrentPlayingIndex] = useState<number>(-1);
@@ -91,9 +92,10 @@ export const Keyboard = () => {
   useEffect(() => {
     const handleNoteKeyDown = ({ key: eventKey, repeat }: KeyboardEvent): void => {
       if (!repeat && isNoteKey(eventKey)) {
+        // eventKey 在这里已经被推断为 EventKey 类型
         audioManagerRef.current?.playNote(eventKey);
         setActiveEventKey((prev) => new Set(prev).add(eventKey));
-
+    
         if (isRecording) {
           const semitone = getSemitone(eventKey, semitoneShift);
           setSemitoneStack((prev) => [...prev, semitone]);

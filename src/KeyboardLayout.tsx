@@ -1,8 +1,9 @@
 import React from "react";
 import Key from "./Key";
-import { keyboardLayouts, isAlpha } from "./utils/musicUtils";
+import { keyboardLayouts, isAlpha, EventKey } from "./utils/musicUtils";
+ 
 
-export const KeyboardLayout = ({ activeEventKey }) => {
+export const KeyboardLayout = ({ activeEventKey }: { activeEventKey: Set<EventKey> }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
       {keyboardLayouts.map((keys, index) => (
