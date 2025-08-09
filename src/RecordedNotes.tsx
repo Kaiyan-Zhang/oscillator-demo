@@ -4,6 +4,7 @@ import RecordedNote from "./RecordedNote";
 import { useAudioContext } from "./AudioContextWrapper";
 import { useBackspace } from "./useBackspace";
 import { useEnter } from "./useEnter";
+import { useWhenKeyDown } from "./utils/useWhenKeyDown";
 
 export const RecordedNotes = ({
   semitoneStack,
@@ -43,18 +44,10 @@ export const RecordedNotes = ({
     playRecording(startIndex);
   }, [isPlaying, playRecording]);
 
-  useEffect(() => {
-    const handleSpace = ({ key: eventKey, repeat }: KeyboardEvent): void => {
-      if (repeat) return;
-      if (eventKey === " ") {
-        handlePlay(playStartIndex);
-      }
-    };
-    document.addEventListener("keydown", handleSpace);
-    return () => {
-      document.removeEventListener("keydown", handleSpace);
-    };
-  }, [handlePlay, playStartIndex]);
+  const onSpace = useCallback(() => {
+    handlePlay(playStartIndex);
+  },[handlePlay, playStartIndex])
+  useWhenKeyDown("Space", onSpace);
 
   useEnter(setIsRecording);
 
