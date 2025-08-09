@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
-import { useAudioContext } from "./AudioContextWrapper.jsx";
-import { AudioManager } from "./utils/audioUtils.js";
+import { useAudioContext } from "./AudioContextWrapper";
+import { AudioManager } from "./utils/audioUtils";
 
 export const useAudioManager = (semitoneShift) => {
   const audioContext = useAudioContext();

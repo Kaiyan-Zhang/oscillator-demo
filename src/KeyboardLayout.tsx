@@ -1,5 +1,5 @@
 import React from "react";
-import Key from "./Key.jsx";
+import Key from "./Key";
 import { keyboardLayouts, isAlpha } from "./utils/musicUtils";
 
 export const KeyboardLayout = ({ activeEventKey }) => {

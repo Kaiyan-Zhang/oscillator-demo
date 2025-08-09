@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import NoteButton from "./NoteButton.jsx"; // 导入新组件
+import NoteButton from "./NoteButton"; // 导入新组件
 import {
   keyboardLayouts,
   getFullNoteName,
@@ -10,11 +10,11 @@ import {
   MIDDLE_C_FREQUENCY,
   getSemitone,
 } from "./utils/musicUtils";
-import { useAudioManager } from "./useAudioManager.jsx";
-import useSemitoneShift from "./useSemitoneShift.jsx";
-import { useAudioContext } from "./AudioContextWrapper.jsx";
-import { KeyboardComponentsWrapper } from "./KeyboardComponentsWrapper.jsx";
-import { GLOBAL_GAIN } from "./utils/audioUtils.js";
+import { useAudioManager } from "./useAudioManager";
+import useSemitoneShift from "./useSemitoneShift";
+import { useAudioContext } from "./AudioContextWrapper";
+import { KeyboardComponentsWrapper } from "./KeyboardComponentsWrapper";
+import { GLOBAL_GAIN } from "./utils/audioUtils";
 
 export const Keyboard = () => {
   const [activeEventKey, setActiveEventKey] = useState(new Set());

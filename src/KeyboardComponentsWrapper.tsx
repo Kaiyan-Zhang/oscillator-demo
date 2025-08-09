@@ -1,7 +1,7 @@
 import React from "react";
-import { SemitoneShiftChangerGraph } from "./SemitoneShiftChangerGraph.jsx";
-import { ActiveNotesDisplay } from "./ActiveNotesDisplay.jsx";
-import { KeyboardLayout } from "./KeyboardLayout.jsx";
+import { SemitoneShiftChangerGraph } from "./SemitoneShiftChangerGraph";
+import { ActiveNotesDisplay } from "./ActiveNotesDisplay";
+import { KeyboardLayout } from "./KeyboardLayout";
 
 export const KeyboardComponentsWrapper = ({
   semitoneShift,

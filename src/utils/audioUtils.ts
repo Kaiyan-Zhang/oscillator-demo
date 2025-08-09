@@ -1,5 +1,5 @@
 import { getFrequency } from "./musicUtils";
-import { eventKeyToSemitone } from "./musicUtils.js";
+import { eventKeyToSemitone } from "./musicUtils";
 
 export const GLOBAL_GAIN = 0.1;
 

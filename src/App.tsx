@@ -1,6 +1,6 @@
 import React from "react";
-import { Keyboard } from "./Keyboard.jsx";
-import { AudioContextWrapper } from "./AudioContextWrapper.jsx";
+import { Keyboard } from "./Keyboard";
+import { AudioContextWrapper } from "./AudioContextWrapper";
 
 export const App = () => {
   return (
